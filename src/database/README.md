@@ -21,5 +21,4 @@ podman run --rm \
 
 Les fichiers `*.sql.pattern` sont substitués en mémoire au premier démarrage. Les secrets ne sont pas copiés dans l'image.
 
-
 Les schémas de migration et le rôle migrateur sont créés parce que les migrations sont activées.

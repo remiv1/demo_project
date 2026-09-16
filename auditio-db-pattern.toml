@@ -1,0 +1,40 @@
+version = 1
+
+[project]
+name = "emsc"
+destination = "/home/remi-verschuur/Projets/demo_project"
+
+[database]
+provider = "postgres"
+version = "18"
+host = "db-main"
+port = 5432
+locale = "fr_FR.utf8"
+
+[[database.databases]]
+id = "main"
+name = "emsc_main"
+schema = "app_schema"
+migration_schema = "migr_main"
+metadata = "common.WorkingBase.metadata"
+model_modules = ["common.models"]
+extensions = ["unaccent", "uuid-ossp", "pgcrypto", "pg_stat_statements"]
+
+[[database.databases]]
+id = "users"
+name = "emsc_users"
+schema = "auth_schema"
+migration_schema = "migr_users"
+metadata = "common.SecureBase.metadata"
+model_modules = ["common.models"]
+secure_access = true
+extensions = ["unaccent", "uuid-ossp", "pgcrypto"]
+
+[environment]
+create = true
+
+[migrations]
+enabled = true
+container_engine = "podman"
+network_name = "emsc-migrations"
+image_name = "emsc-migrations"

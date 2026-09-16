@@ -1,0 +1,16 @@
+FROM docker.io/library/redis:8-bookworm
+
+WORKDIR /data
+
+COPY src/redis/redis.conf /usr/local/etc/redis/redis.conf
+COPY src/redis/docker-entrypoint.sh /usr/local/bin/docker-entrypoint-emsc.sh
+
+RUN chmod 0755 /usr/local/bin/docker-entrypoint-emsc.sh \
+	&& mkdir /run/redis \
+	&& chown redis:redis /run/redis
+
+USER redis
+
+VOLUME ["/data"]
+
+CMD ["/usr/local/bin/docker-entrypoint-emsc.sh"]

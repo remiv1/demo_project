@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  REDIS_APPLICATION_PASSWORD: MotDePasseRedisProvisoire
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: redis-src-redis--env-redis
+  name: src-redis--env-redis

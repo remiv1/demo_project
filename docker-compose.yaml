@@ -1,0 +1,38 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: src/database/Dockerfile
+    container_name: db-main
+    env_file:
+      - ./src/database/.env.postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=$${POSTGRES_USER} --dbname=$${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    build:
+      context: .
+      dockerfile: src/redis/dockerfile.redis
+    container_name: redis-streams
+    env_file:
+      - ./src/redis/.env.redis
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --user application --pass \"$${REDIS_APPLICATION_PASSWORD}\" PING | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:

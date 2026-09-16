@@ -1,0 +1,21 @@
+apiVersion: v1
+data:
+  POSTGRES_DB: postgres
+  POSTGRES_DB_MAIN: emsc_main
+  POSTGRES_DB_USERS: emsc_users
+  POSTGRES_HOST: db-main
+  POSTGRES_INITDB_ARGS: -c shared_preload_libraries=pg_stat_statements -c password_encryption=scram-sha-256
+  POSTGRES_PASSWORD: 41Gk1nnOBYdGuQig_n3_B3b6AWzd4BcITxVA8cGM
+  POSTGRES_PASSWORD_APP: aMWTpIdD5rm3aCyslM1GGDHq_LUQ7_KL4duC4qar
+  POSTGRES_PASSWORD_MIGR: 2kvKtHlQ7iZbTz2bRLMCcdLbPqXOp5H9VREmnm6Z
+  POSTGRES_PASSWORD_SECURE: zc2Y0RKCZkQKUR1-9Tx7Sab50_y-p-psdtQHbxBZ
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: postgres
+  POSTGRES_USER_APP: emsc
+  POSTGRES_USER_MIGR: migr
+  POSTGRES_USER_SECURE: secure
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: postgres-src-database--env-postgres
+  name: src-database--env-postgres

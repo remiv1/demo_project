@@ -2,3 +2,5 @@ venv/
 __pycache__/
 *.pyc
 all_responses.parquet
+.env.postgres
+.env.redis

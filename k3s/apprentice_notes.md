@@ -288,7 +288,7 @@ k8s/
 │ └── service.yaml
 │
 └── ingress/
-└── ingress.yaml
+  └── ingress.yaml
 ```
 
 ### Cas particulier du projet
@@ -311,3 +311,15 @@ Il reste principalement à :
 - Créer un Ingress Traefik pour exposer les applications web.
 
 Il y a déjà environ 80 % de la migration vers k3s
+
+## Notes supplémentaires
+
+### A quoi correspondent les différents fichiers ?
+
+| Fichier         | Question                                |
+| --------------- | --------------------------------------- |
+| pvc.yaml        | Où stocker les données ?                |
+| deployment.yaml | Quel conteneur exécuter ?               |
+| service.yaml    | Comment les autres pods le contactent ? |
+| configmap.yaml  | Quelles variables non sensibles ?       |
+| secret.yaml     | Quels mots de passe et clés ?           |

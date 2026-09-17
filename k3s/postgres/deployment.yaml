@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: postgres
+  namespace: demo-project
+
+spec:
+  serviceName: postgres
+
+  replicas: 1
+  
+  selector:
+    matchLabels:
+      app: postgres
+
+  updateStrategy:
+    type: RollingUpdate
+
+  template:
+    metadata:
+      labels:
+        app: postgres
+
+    spec:
+      automountServiceAccountToken: false
+
+      containers:
+
+      - name: db-main
+        image: postgres:18
+
+        envFrom:
+          - configMapRef:
+            name: postgres-config
+
+          - secretRef:
+            name: app-secret
+
+        volumeMounts:
+          - name: postgres-data
+            mountPath: /var/lib/postgresql/data
+          
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+            ephemeral-storage: "1Gi"
+
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+            ephemeral-storage: "2Gi"
+
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data

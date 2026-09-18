@@ -81,11 +81,12 @@ history_start = "2026-01-01T00:00:00Z"
 
 Ces paramètres correspondent aux choix actuels :
 
-- fréquence initiale de 30 secondes, modifiable sans changer le code ;
 - début de l'historique au 1er janvier 2026 ;
 - période historique configurable pour permettre des essais sur différentes fenêtres temporelles.
 
-La version finale séparera les paramètres de développement, d'exploitation et les secrets. Aucun secret ne doit être enregistré dans le dépôt.
+La version finale séparera les paramètres de développement, d'exploitation et les secrets.
+
+> Aucun secret ne doit être enregistré dans le dépôt.
 
 ## Exploration Jupyter
 
@@ -159,19 +160,19 @@ Ces flux seront des projections spécialisées du flux principal, et non une con
 
 - Python 3.14 ;
 - PostgreSQL 18 avec PostGIS ;
-- Redis dans une version stable récente, qui sera figée dans la configuration de déploiement ;
+- Redis 8 ;
 - Podman au démarrage ;
-- migration ultérieure vers K3S ;
-- tests ajoutés lorsque des cas métier et des comportements attendus auront été définis.
+- Migration en cours vers K3S ;
+- Tests ajoutés lorsque des cas métier et des comportements attendus auront été définis.
 
 ## Étapes suivantes
 
-1. compléter l'exploration EMSC et confirmer les valeurs minoritaires ;
-2. décider les colonnes normalisées et les données brutes à conserver ;
-3. définir les règles de déduplication et de mise à jour ;
-4. implémenter le chargement historique FDSN ;
-5. implémenter le client WebSocket avec reconnexion et réconciliation ;
-6. ajouter PostgreSQL/PostGIS, les migrations et RLS ;
-7. brancher Redis Streams et les premiers consommateurs ;
-8. préparer Compose Podman, puis les manifests K3S ;
-9. étudier le déploiement GCP.
+- [X] compléter l'exploration EMSC et confirmer les valeurs minoritaires ;
+- [X] décider les colonnes normalisées et les données brutes à conserver ;
+- [ ] définir les règles de déduplication et de mise à jour ;
+- [ ] implémenter le chargement historique FDSN ;
+- [ ] implémenter le client WebSocket avec reconnexion et réconciliation ;
+- [ ] ajouter PostgreSQL/PostGIS, les migrations et RLS ;
+- [ ] brancher Redis Streams et les premiers consommateurs ;
+- [ ] préparer Compose Podman, puis les manifests K3S ;
+- [ ] étudier le déploiement GCP.

@@ -1,32 +1,14 @@
 """Moteur Alembic généré pour la base main."""
 
-import importlib
 import os
 import urllib.parse
 from logging.config import fileConfig
-from typing import Any
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-
-def resolve_object(dotted_path: str) -> Any:
-    """Résoudre un objet depuis son chemin Python qualifié."""
-
-    parts = dotted_path.split(".")
-    for index in range(len(parts), 0, -1):
-        try:
-            value: Any = importlib.import_module(".".join(parts[:index]))
-        except ModuleNotFoundError:
-            continue
-        for attribute in parts[index:]:
-            value = getattr(value, attribute)
-        return value
-    raise ImportError(f"Objet Python introuvable : {dotted_path}")
-
-
-
-importlib.import_module("common.models")
+from common.config.db import BaseMain
+from common.models.sqlalchemy.emsc import EMSC
 
 
 configuration = context.config
@@ -42,7 +24,7 @@ configuration.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 if configuration.config_file_name is not None:
     fileConfig(configuration.config_file_name)
 
-target_metadata = resolve_object("common.WorkingBase.metadata")
+target_metadata = BaseMain.metadata
 
 
 def run_migrations_offline() -> None:

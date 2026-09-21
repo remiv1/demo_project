@@ -7,6 +7,9 @@ services:
         APP_UID: ${APP_UID:-1000}
         APP_GID: ${APP_GID:-1000}
     container_name: api-back
+    env_file:
+      - src/database/.env.postgres
+      - src/api_back/.env
     ports:
       - "8000:8000"
     volumes:
@@ -24,6 +27,9 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    networks:
+      - default
+      - emsc-network
 
   api-front:
     build:
@@ -31,6 +37,7 @@ services:
     container_name: api-front
     env_file:
       - ./src/api_front/.env
+      - src/database/.env.postgres
     ports:
       - "8001:8001"
     depends_on:
@@ -43,6 +50,9 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    networks:
+      - default
+      - emsc-network
 
   postgres:
     build:
@@ -60,6 +70,10 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    networks:
+      - default
+      - emsc-network
+      - emsc-migration
 
   redis:
     build:
@@ -77,9 +91,20 @@ services:
       retries: 5
       start_period: 5s
     restart: unless-stopped
+    networks:
+      - default
+      - emsc-network
 
 volumes:
   postgres-data:
     driver: local
   redis-data:
     driver: local
+
+networks:
+  default:
+    driver: bridge
+  emsc-migration:
+    driver: bridge
+  emsc-network:
+    driver: bridge

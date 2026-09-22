@@ -1,5 +1,6 @@
 """Moteur Alembic généré pour la base users."""
 
+import sys
 import importlib
 import os
 import urllib.parse
@@ -9,27 +10,12 @@ from typing import Any
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+sys.path.insert(0, "/app")
 
-def resolve_object(dotted_path: str) -> Any:
-    """Résoudre un objet depuis son chemin Python qualifié."""
+from common.config.db import BaseUsers  # pylint: disable=C0413
+from common.models.sqlalchemy.users import Users, UsersPassword, UserSession # pylint: disable=W0611, C0413
 
-    parts = dotted_path.split(".")
-    for index in range(len(parts), 0, -1):
-        try:
-            value: Any = importlib.import_module(".".join(parts[:index]))
-        except ModuleNotFoundError:
-            continue
-        for attribute in parts[index:]:
-            value = getattr(value, attribute)
-        return value
-    raise ImportError(f"Objet Python introuvable : {dotted_path}")
-
-
-
-importlib.import_module("common.models")
-
-
-configuration = context.config
+configuration = context.config  # pylint: disable=E1101
 password = urllib.parse.quote(os.getenv("POSTGRES_PASSWORD_MIGR", ""), safe="")
 database_url = (
     "postgresql+psycopg2://"
@@ -42,21 +28,21 @@ configuration.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 if configuration.config_file_name is not None:
     fileConfig(configuration.config_file_name)
 
-target_metadata = resolve_object("common.SecureBase.metadata")
+target_metadata = BaseUsers.metadata
 
 
 def run_migrations_offline() -> None:
     """Produire le SQL sans ouvrir de connexion."""
 
-    context.configure(
+    context.configure(  # pylint: disable=E1101
         url=configuration.get_main_option("sqlalchemy.url"),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         version_table_schema="migr_users",
     )
-    with context.begin_transaction():
-        context.run_migrations()
+    with context.begin_transaction():  # pylint: disable=E1101
+        context.run_migrations()  # pylint: disable=E1101
 
 
 def run_migrations_online() -> None:
@@ -68,17 +54,17 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(
+        context.configure(  # pylint: disable=E1101
             connection=connection,
             target_metadata=target_metadata,
             version_table_schema="migr_users",
             version_table="alembic_version",
         )
-        with context.begin_transaction():
-            context.run_migrations()
+        with context.begin_transaction():  # pylint: disable=E1101
+            context.run_migrations()  # pylint: disable=E1101
 
 
-if context.is_offline_mode():
+if context.is_offline_mode():  # pylint: disable=E1101
     run_migrations_offline()
 else:
     run_migrations_online()

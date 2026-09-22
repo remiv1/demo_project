@@ -2,8 +2,9 @@
 
 set -euo pipefail
 
+project_name="demo_project"
 container_engine="podman"
-network="emsc-migrations"
+network="${project_name}_emsc-migrations"
 image="emsc-migrations"
 container_root="/app"
 host_project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

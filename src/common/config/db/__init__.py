@@ -1,6 +1,6 @@
 """Initialisation du module de configuration de la base de données."""
 
-from .db_config import DatabaseConfig, DatabaseUsage
+from .db_config import DatabaseConfig, DatabaseUsage, CASCADE_OPTION
 from .db_connection import (
     BaseMain,
     BaseUsers,
@@ -11,6 +11,7 @@ from .db_connection import (
 )
 
 __all__ = [
+    "CASCADE_OPTION",
     "DatabaseConfig",
     "DatabaseUsage",
     "BaseMain",

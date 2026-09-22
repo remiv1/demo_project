@@ -3,6 +3,8 @@
 from os import getenv
 from enum import Enum
 
+CASCADE_OPTION = "all, delete-orphan"
+
 class DatabaseUsage(Enum):
     """Types d'utilisation de la base de données."""
     MAIN = "main"

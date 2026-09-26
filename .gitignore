@@ -4,3 +4,4 @@ __pycache__/
 all_responses.parquet
 .env.postgres
 .env.redis
+*.acl

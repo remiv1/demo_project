@@ -176,3 +176,311 @@ Ces flux seront des projections spécialisées du flux principal, et non une con
 - [ ] brancher Redis Streams et les premiers consommateurs ;
 - [ ] préparer Compose Podman, puis les manifests K3S ;
 - [ ] étudier le déploiement GCP.
+
+## Vue d'ensemble du streaming Redis
+
+```mermaid
+flowchart TD
+
+    EMSC["Flux EMSC<br/>WebSocket/API"]
+
+    RAW["Redis Stream<br/>stream:earthquakes:raw"]
+
+    IG["Consumer Group<br/>ingestion"]
+
+    IW["Consumer<br/>ingestion-worker"]
+
+    DB["Database<br/>PostgreSQL"]
+
+    NOTIF["Redis Stream<br/>stream:notifications"]
+
+    NG["Consumer Group<br/>notification"]
+
+    NW["Consumer<br/>notification-worker"]
+
+    SUB["(Table subscriptions)"]
+
+    WSM[WebSocket Manager]
+
+    U1[Utilisateur A]
+    U2[Utilisateur B]
+    U3[Utilisateur C]
+
+    EMSC -->|XADD| RAW
+
+    RAW --> IG
+    IG --> IW
+
+    IW -->|INSERT| DB
+
+    IW -->|XADD notification| NOTIF
+
+    IW -->|XACK raw| RAW
+
+    NOTIF --> NG
+    NG --> NW
+
+    NW -->|Recherche abonnements| SUB
+
+    NW -->|Envoi ciblé| WSM
+
+    WSM --> U1
+    WSM --> U2
+    WSM --> U3
+
+    NW -->|XACK notification| NOTIF
+```
+
+### Etape 1 arrivée d'un évènement EMSC
+
+Le worker EMSC reçoit :
+
+```json
+{
+    "emsc_id": "12345",
+    "country": "FR",
+    "magnitude": 4.6
+}
+```
+
+et l'envoie dans :
+
+```text
+stream:earthquakes:raw
+```
+
+via :
+
+```python
+r.xadd(
+    "stream:earthquakes:raw",
+    payload
+)
+```
+
+Le Stream devient :
+
+```text
+stream:earthquakes:raw
+ 
+├── 1758890001-0
+├── 1758890002-0
+└── 1758890003-0
+```
+
+### Etape 2 ingestion par le worker
+
+Le groupe :
+
+```text
+ingestion
+```
+
+lit ce stream.
+
+```mermaid
+flowchart LR
+
+    S[stream:earthquakes:raw]
+    G[group ingestion]
+    C[ingestion-worker]
+
+    S --> G
+    G --> C
+```
+
+Le worker :
+
+- valide le JSON ;
+- vérifie les doublons ;
+- enrichit les données ;
+- sauvegarde en base.
+
+### Etape 3 sauvegarde PostgreSQL
+
+```text
+earthquake
+| id | emsc\_id | country | magnitude |
+| -- | -------- | ------- | --------- |
+| 42 | 12345    | FR      | 4.6       |
+```
+
+Le worker obtient :
+
+```txt
+event_id = 42
+```
+Étape 4 : création d'un événement métier
+
+Au lieu d'envoyer directement vers les sockets, il produit un nouvel événement :
+
+JSON
+{
+"event_id": 42,
+"event_type": "earthquake",
+"action": "new",
+"country": "FR",
+"magnitude": 4.6
+}
+Afficher plus de lignes
+
+dans :
+
+Plain Text
+stream:notifications
+Afficher plus de lignes
+Python
+r.xadd(
+"stream:notifications",
+payload
+)
+Afficher plus de lignes
+Étape 5 : ACK du message brut
+
+Une fois :
+
+l'écriture PostgreSQL terminée ;
+le message de notification créé ;
+
+on valide :
+
+Python
+r.xack(
+"stream:earthquakes:raw",
+"ingestion",
+message_id
+)
+Afficher plus de lignes
+
+Ainsi :
+
+Plain Text
+pas de perte de données
+Afficher plus de lignes
+
+si le worker plante.
+
+Étape 6 : consommation des notifications
+Mermaid
+flowchart LR
+ 
+S[stream:notifications]
+ 
+G[group notification]
+ 
+W[notification-worker]
+ 
+S --> G
+G --> W
+Afficher plus de lignes
+
+Le worker reçoit :
+
+JSON
+{
+"event_id": 42,
+"country": "FR",
+"action": "new"
+}
+Afficher plus de lignes
+Étape 7 : recherche des abonnés
+
+PostgreSQL :
+
+SQL
+subscriptions
+Afficher plus de lignes
+user_id	country1	FR
+2	FR
+3	DE
+
+Le worker exécute :
+
+SQL
+SELECT user_id
+FROM subscriptions
+WHERE country = 'FR'
+Afficher plus de lignes
+
+Résultat :
+
+Plain Text
+1
+2
+Afficher plus de lignes
+Étape 8 : WebSocket Manager
+
+Le serveur possède :
+
+Python
+active_connections = {
+1: websocket_1,
+2: websocket_2,
+3: websocket_3,
+}
+ 
+Afficher plus de lignes
+
+Le worker envoie uniquement :
+
+Python
+await websocket_1.send_json(...)
+await websocket_2.send_json(...)
+Afficher plus de lignes
+
+Pas :
+
+Python
+websocket_3
+Afficher plus de lignes
+
+car l'utilisateur 3 est abonné à l'Allemagne.
+
+Étape 9 : ACK de la notification
+
+Une fois les envois réalisés :
+
+Python
+xack(
+"stream:notifications",
+"notification",
+message_id
+)
+Afficher plus de lignes
+Pourquoi j'aime cette architecture
+
+Elle sépare clairement les responsabilités :
+
+Plain Text
+stream:earthquakes:raw
+↓
+collecte des données
+ 
+PostgreSQL
+↓
+source de vérité
+ 
+stream:notifications
+↓
+diffusion des événements
+ 
+WebSocket
+↓
+temps réel utilisateur
+Afficher plus de lignes
+
+Et surtout :
+
+Plain Text
+EMSC
+↓
+Redis
+↓
+PostgreSQL
+↓
+Redis
+↓
+WebSocket
+Afficher plus de lignes
+
+Chaque étape peut tomber puis redémarrer sans perdre les messages.

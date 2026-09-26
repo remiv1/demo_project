@@ -7,7 +7,11 @@ WORKDIR /app
 
 COPY src/api_back/requirements.txt /tmp/requirements.txt
 
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt && \
     addgroup --system --gid "${APP_GID}" appuser && \
     adduser --system --uid "${APP_UID}" --ingroup appuser --home /app appuser
 

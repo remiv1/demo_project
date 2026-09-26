@@ -4,8 +4,10 @@ WORKDIR /data
 
 COPY src/redis/redis.conf /usr/local/etc/redis/redis.conf
 COPY src/redis/docker-entrypoint.sh /usr/local/bin/docker-entrypoint-emsc.sh
+COPY src/redis/generate-acl.sh /usr/local/bin/generate-acl.sh
 
 RUN chmod 0755 /usr/local/bin/docker-entrypoint-emsc.sh \
+	&& chmod 0755 /usr/local/bin/generate-acl.sh \
 	&& mkdir /run/redis \
 	&& chown redis:redis /run/redis
 

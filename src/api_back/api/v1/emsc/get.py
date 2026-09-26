@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 @router.get("/")
-async def get_emsc_data() -> dict[str, str]:
+async def get_emsc_data() -> dict[str, str | list[Feature]]:
     """Handle GET requests for EMSC data."""
     all_responses: list[Feature] = await fetch_emsc_data()
-    return {"message": "EMSC GET endpoint", "data": "ok"}
+    return {"message": "EMSC GET endpoint", "data": all_responses}

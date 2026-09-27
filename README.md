@@ -310,11 +310,12 @@ Le worker obtient :
 ```txt
 event_id = 42
 ```
-Étape 4 : création d'un événement métier
+
+### Étape 4 : création d'un événement métier
 
 Au lieu d'envoyer directement vers les sockets, il produit un nouvel événement :
 
-JSON
+```json
 {
 "event_id": 42,
 "event_type": "earthquake",
@@ -322,46 +323,49 @@ JSON
 "country": "FR",
 "magnitude": 4.6
 }
-Afficher plus de lignes
+```
 
 dans :
 
-Plain Text
+```text
 stream:notifications
-Afficher plus de lignes
-Python
+```
+
+```python
 r.xadd(
 "stream:notifications",
 payload
 )
-Afficher plus de lignes
-Étape 5 : ACK du message brut
+```
+
+### Étape 5 : ACK du message brut
 
 Une fois :
 
-l'écriture PostgreSQL terminée ;
-le message de notification créé ;
+- l'écriture PostgreSQL terminée ;
+- le message de notification créé ;
 
 on valide :
 
-Python
+```python
 r.xack(
 "stream:earthquakes:raw",
 "ingestion",
 message_id
 )
-Afficher plus de lignes
+```
 
 Ainsi :
 
-Plain Text
+```text
 pas de perte de données
-Afficher plus de lignes
+```
 
 si le worker plante.
 
-Étape 6 : consommation des notifications
-Mermaid
+### Étape 6 : consommation des notifications
+
+```mermaid
 flowchart LR
  
 S[stream:notifications]
@@ -372,86 +376,90 @@ W[notification-worker]
  
 S --> G
 G --> W
-Afficher plus de lignes
+```
 
 Le worker reçoit :
 
-JSON
+```json
 {
 "event_id": 42,
 "country": "FR",
 "action": "new"
 }
-Afficher plus de lignes
-Étape 7 : recherche des abonnés
+```
+
+### Étape 7 : recherche des abonnés
 
 PostgreSQL :
 
-SQL
+```txt
 subscriptions
-Afficher plus de lignes
-user_id	country1	FR
-2	FR
-3	DE
+
+| user_id | country |
+| --- | --- |
+| 1 | FR |
+| 2 | FR |
+| 3 | DE |
+```
 
 Le worker exécute :
 
-SQL
+```sql
 SELECT user_id
 FROM subscriptions
 WHERE country = 'FR'
-Afficher plus de lignes
+```
 
 Résultat :
 
-Plain Text
+```text
 1
 2
-Afficher plus de lignes
-Étape 8 : WebSocket Manager
+```
+
+### Étape 8 : WebSocket Manager
 
 Le serveur possède :
 
-Python
+```python
 active_connections = {
 1: websocket_1,
 2: websocket_2,
 3: websocket_3,
 }
  
-Afficher plus de lignes
+```
 
 Le worker envoie uniquement :
 
-Python
+```python
 await websocket_1.send_json(...)
 await websocket_2.send_json(...)
-Afficher plus de lignes
+```
 
 Pas :
 
-Python
+```python
 websocket_3
-Afficher plus de lignes
+```
 
 car l'utilisateur 3 est abonné à l'Allemagne.
 
-Étape 9 : ACK de la notification
+### Étape 9 : ACK de la notification
 
 Une fois les envois réalisés :
 
-Python
+```python
 xack(
 "stream:notifications",
 "notification",
 message_id
 )
-Afficher plus de lignes
-Pourquoi j'aime cette architecture
+```
 
-Elle sépare clairement les responsabilités :
+Cette architecture sépare clairement les responsabilités :
 
-Plain Text
+```text
 stream:earthquakes:raw
 ↓
 collecte des données
@@ -467,11 +475,11 @@ diffusion des événements
 WebSocket
 ↓
 temps réel utilisateur
-Afficher plus de lignes
+```
 
 Et surtout :
 
-Plain Text
+```text
 EMSC
 ↓
 Redis
@@ -481,6 +489,6 @@ PostgreSQL
 Redis
 ↓
 WebSocket
-Afficher plus de lignes
+```
 
 Chaque étape peut tomber puis redémarrer sans perdre les messages.

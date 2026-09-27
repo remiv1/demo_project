@@ -30,7 +30,7 @@ cat > "$ACL_PATH" <<EOF
 
 user default off
 
-user ${REDIS_USERNAME} on >${REDIS_PASSWORD} ~* +xreadgroup +xack +xpending +ping
-user ${REDIS_WORKER_USERNAME} on >${REDIS_WORKER_PASSWORD} ~* +xadd +xgroup +ping +exists +xinfo
+user ${REDIS_USERNAME} on >${REDIS_PASSWORD} ~* +@all
+user ${REDIS_WORKER_USERNAME} on >${REDIS_WORKER_PASSWORD} ~* +@all
 user ${REDIS_MONITOR_USERNAME} on >${REDIS_MONITOR_PASSWORD} +@read
 EOF

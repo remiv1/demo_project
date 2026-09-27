@@ -1,0 +1,2 @@
+redis>=8.1.0
+pydantic>=2.13.5

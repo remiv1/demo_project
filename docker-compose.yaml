@@ -56,6 +56,29 @@ services:
       - default
       - emsc-network
 
+  api-worker:
+    build:
+      context: .
+      dockerfile: src/api_worker/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    container_name: api-worker
+    env_file:
+      - ./src/database/.env.postgres
+      - ./src/redis/.env.redis
+    volumes:
+      - ./src/api_worker/worker.conf:/etc/worker/worker.conf:ro,z
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - default
+      - emsc-network
+
   postgres:
     build:
       context: .

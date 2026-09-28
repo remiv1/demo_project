@@ -15,7 +15,6 @@ from common.config.redis import RedisConfig, RedisUser
 from .config import StreamConfig, load_streams
 from .repositories import (
     REPOSITORIES,
-    IngestionRepository,
     RepositoryNotImplementedError,
 )
 
@@ -30,7 +29,10 @@ def create_redis_client() -> Redis:
     Returns:
         Redis: Le client Redis configuré pour le worker.
     """
-    return Redis(**RedisConfig(RedisUser.WORKER).as_dict())
+    return Redis(
+        **RedisConfig(RedisUser.WORKER).as_dict(),
+        socket_timeout=10,
+    )
 
 
 def create_consumer_group(
@@ -53,7 +55,7 @@ def create_consumer_group(
 
 def get_repository(
     stream: StreamConfig,
-) -> IngestionRepository:
+):
     """
     Retourne le repository associé à un flux configuré.
 
@@ -74,7 +76,7 @@ def get_repository(
 def ingest_message(
     redis_client: Redis,
     stream: StreamConfig,
-    repository: IngestionRepository,
+    repository: object,
     message_id: str,
     fields: dict[str, str],
 ) -> None:
@@ -84,20 +86,27 @@ def ingest_message(
     Args:
         redis_client (Redis): Le client Redis.
         stream (StreamConfig): La configuration du flux Redis.
-        repository (IngestionRepository): Le repository pour ingérer les messages.
+        repository (object): Le repository pour ingérer les messages.
         message_id (str): L'identifiant du message.
         fields (dict[str, str]): Les champs du message.
 
     Returns:
         None
     """
-    payload: dict[str, Any] = json.loads(fields["payload"])
-    event = repository.ingest(payload)
+    payload: Any = json.loads(fields["payload"])
+    if not isinstance(payload, dict):
+        raise ValueError("Objet JSON attendu dans le message Redis")
+    if stream.repository == "earthquakes":
+        payload = payload.get("data")
+        if not isinstance(payload, dict):
+            raise ValueError("Objet JSON attendu dans data pour le flux EMSC")
+    event = repository.ingest(payload)  # type: ignore
+    notification_event = payload if stream.repository == "earthquakes" else event
     redis_client.xadd(
         stream.notification_stream,
         {
             "payload": json.dumps(
-                {"type": stream.repository, "event": event},
+                {"type": stream.repository, "event": notification_event},
                 separators=(",", ":"),
             )
         },
@@ -108,7 +117,7 @@ def ingest_message(
 def process_entries(
     redis_client: Redis,
     stream: StreamConfig,
-    repository: IngestionRepository,
+    repository: object,
     entries: list[tuple[str, list[tuple[str, dict[str, str]]]]],
 ) -> str | None:
     """Traite les entrées reçues et retourne l'identifiant de la dernière."""
@@ -130,7 +139,7 @@ def process_entries(
 def consume_stream(
     redis_client: Redis,
     stream: StreamConfig,
-    repository: IngestionRepository,
+    repository: object,
 ) -> None:
     """
     Consomme continuellement un flux Redis.

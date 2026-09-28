@@ -31,7 +31,7 @@ Les routes de gestion des Streams sont des routes internes de développement. El
 
 ### Fiabilité de la publication
 
-Les repositories `Earthquakes` et `Flood` ne sont pas encore implémentés : aucun commit, acquittement ou `new_event` n'est produit pour ces messages. Chaque WebSocket lit `new_event` avec son propre curseur, sans groupe partagé : tous les utilisateurs connectés reçoivent les mêmes notifications. À la première connexion, Flask se place après la dernière notification ; lors d'une reconnexion dans la même page, le navigateur transmet le dernier ID reçu et Flask reprend après cet ID. Un rechargement complet perd ce curseur. Aucune limite de rétention n'est encore configurée : le Stream grandira tant qu'il n'est pas nettoyé ; une politique de rétention future réduira la fenêtre de reprise.
+Les repositories `EarthquakesRepo` et `FloodRepo` ne sont pas encore totalement implémentés : aucun commit, acquittement ou `new_event` n'est produit pour ces messages. Chaque WebSocket lit `new_event` avec son propre curseur, sans groupe partagé : tous les utilisateurs connectés reçoivent les mêmes notifications. À la première connexion, Flask se place après la dernière notification ; lors d'une reconnexion dans la même page, le navigateur transmet le dernier ID reçu et Flask reprend après cet ID. Un rechargement complet perd ce curseur. Aucune limite de rétention n'est encore configurée : le Stream grandira tant qu'il n'est pas nettoyé ; une politique de rétention future réduira la fenêtre de reprise.
 
 Après implémentation des repositories, une interruption entre commit, publication et acquittement pourra produire des notifications en double ; l'ingestion devra être idempotente et une outbox sera nécessaire pour garantir la diffusion.
 

@@ -1,8 +1,8 @@
-"""first_migration
+"""first migration
 
-Revision ID: fe929c2c53b7
+Revision ID: dfef386f0b86
 Revises: 
-Create Date: 2026-09-28 10:15:35.828473
+Create Date: 2026-09-28 16:13:04.741229
 """
 
 from collections.abc import Sequence
@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = 'fe929c2c53b7'
+revision: str = 'dfef386f0b86'
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None

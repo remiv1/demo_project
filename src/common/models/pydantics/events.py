@@ -5,13 +5,15 @@ from datetime import datetime
 from pydantic import BaseModel
 
 class Geometri(BaseModel):
+    """Modèle représentant la géométrie d'un événement géologique."""
     type: str
     coordinates: list[float]
 
 class Properties(BaseModel):
+    """Modèle représentant les propriétés d'un événement géologique."""
     source_id: int
     source_catalog: str
-    last_update: datetime
+    lastupdate: datetime
     time: datetime
     flynn_region: str
     lat: float
@@ -24,6 +26,7 @@ class Properties(BaseModel):
     unid: str
 
 class Feature(BaseModel):
+    """Modèle représentant un événement géologique."""
     type: str
     id: str
     geometry: Geometri

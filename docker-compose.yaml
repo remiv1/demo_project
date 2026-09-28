@@ -19,7 +19,6 @@ services:
       - "8000:8000"
     volumes:
       - ./src/common:/app/common:rw,z
-      - ./src/config:/app/config:rw,z
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,6 +73,9 @@ services:
     env_file:
       - ./src/database/.env.postgres
       - ./src/redis/.env.redis
+    environment:
+      - DB_HOST=${DB_HOST:-postgres}
+      - SAFEPASS=${SAFEPASS:-}
     volumes:
       - ./src/api_worker/worker.conf:/etc/worker/worker.conf:ro,z
     depends_on:

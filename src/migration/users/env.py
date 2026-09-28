@@ -29,6 +29,20 @@ if configuration.config_file_name is not None:
 target_metadata = BaseUsers.metadata
 
 
+def include_name(name: str | None, type_: str, _parent_names: dict[str, str | None]) -> bool:
+    """Exclut les tables gérées par l'extension PostGIS de l'autogénération.
+
+    Args:
+        name: Nom de l'objet inspecté.
+        type_: Type de l'objet inspecté par Alembic.
+        _parent_names: Noms de ses objets parents, inutilisés ici.
+
+    Returns:
+        Vrai si l'objet relève des migrations applicatives.
+    """
+    return not (type_ == "table" and name == "spatial_ref_sys")
+
+
 def run_migrations_offline() -> None:
     """Produire le SQL sans ouvrir de connexion."""
 
@@ -38,6 +52,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         version_table_schema="migr_users",
+        include_name=include_name,  # type: ignore
     )
     with context.begin_transaction():  # pylint: disable=E1101
         context.run_migrations()  # pylint: disable=E1101
@@ -57,6 +72,7 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             version_table_schema="migr_users",
             version_table="alembic_version",
+            include_name=include_name,  # type: ignore
         )
         with context.begin_transaction():  # pylint: disable=E1101
             context.run_migrations()  # pylint: disable=E1101

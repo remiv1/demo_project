@@ -68,21 +68,23 @@ Le client WebSocket devra prévoir :
 - validation et persistance avant publication dans Redis Streams ;
 - réconciliation périodique avec l'API FDSN pour récupérer les messages éventuellement manqués.
 
-L'API FDSN reste nécessaire pour le chargement historique, la reprise après incident et la réconciliation. Le polling configuré dans le fichier TOML est donc conservé comme mécanisme de secours, et non comme voie principale du temps réel.
+L'API FDSN reste nécessaire pour le chargement historique, la reprise après incident et la réconciliation. L'import historique s'exécute dans un conteneur éphémère, indépendamment de l'API HTTP et du flux WebSocket.
 
 ## Configuration actuelle
 
-La configuration initiale se trouve dans [`src/config/infra.conf`](src/config/infra.conf) et utilise le format TOML :
+La configuration de l'import éphémère se trouve dans [`src/seed/infra.conf`](src/seed/infra.conf) et utilise le format TOML :
 
 ```toml
 [ingestion]
 history_start = "2026-01-01T00:00:00Z"
+timeout = 30
 ```
 
 Ces paramètres correspondent aux choix actuels :
 
 - début de l'historique au 1er janvier 2026 ;
-- période historique configurable pour permettre des essais sur différentes fenêtres temporelles.
+- délai maximal des requêtes FDSN de 30 secondes ;
+- période historique modifiable ponctuellement avec `HISTORY_START` et `HISTORY_END` lors du lancement de [`src/seed/run-seed.sh`](src/seed/run-seed.sh).
 
 La version finale séparera les paramètres de développement, d'exploitation et les secrets.
 

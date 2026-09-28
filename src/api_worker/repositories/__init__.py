@@ -1,18 +1,19 @@
 """Initialisation du package des repositories d'ingestion."""
 
-from .earthquakes import Earthquakes
-from .floods import Flood
-from .common import IngestionRepository, RepositoryNotImplementedError
+from common.config.db.db_connection import main_session
 
-REPOSITORIES: dict[str, IngestionRepository] = {
-    "earthquakes": Earthquakes(),
-    "flood": Flood(),
+from .earthquakes import EarthquakesRepo
+from .floods import FloodsRepo
+from .common import RepositoryNotImplementedError
+
+REPOSITORIES: dict[str, object] = {
+    "earthquakes": EarthquakesRepo(session=main_session),
+    "flood": FloodsRepo(session=main_session),
 }
 
 __all__ = [
-    "Earthquakes",
-    "Flood",
-    "IngestionRepository",
+    "EarthquakesRepo",
+    "FloodsRepo",
     "RepositoryNotImplementedError",
     "REPOSITORIES"
 ]

@@ -1,16 +1,17 @@
 """Inscription, identification et validation TOTP côté backend."""
 
+from typing import Generator
 import os
 from secrets import compare_digest
 
 import pyotp
 from argon2.exceptions import VerifyMismatchError, VerificationError
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response
-from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from common.models.sqlalchemy.users import UserOTP, UserSession, Users, UsersPassword
+from .models import Credentials, Registration, OTPCode
 
 from .utils import (
     COOKIE_NAME,
@@ -27,52 +28,78 @@ from .utils import (
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-
-class Credentials(BaseModel):
-    """Identifiants fournis à l'inscription ou à la connexion."""
-
-    email: EmailStr
-    password: str = Field(min_length=12, max_length=256)
-
-
-class Registration(Credentials):
-    """Identifiants et nom public du nouveau compte."""
-
-    username: str = Field(min_length=3, max_length=50)
-
-
-class OTPCode(BaseModel):
-    """Code à six chiffres fourni par l'application TOTP."""
-
-    code: str = Field(pattern=r"^\d{6}$")
-
-
-def database():
-    """Ouvre une session SQL pour une requête puis la ferme."""
+def database() -> Generator[Session, None, None]:
+    """
+    Ouvre une session SQL pour une requête puis la ferme.
+    
+    args:
+        None
+    return:
+        Generator[Session, None, None]: Une session SQL ouverte pour la durée de la requête.
+    """
     with new_session() as db:
         yield db
 
 
 def internal_key(x_frontend_key: str | None = Header(default=None)) -> None:
-    """Réserve les routes d'authentification au proxy Flask interne."""
+    """
+    Réserve les routes d'authentification au proxy Flask interne.
+    
+    raise:
+        HTTPException: En cas d'échec d'authentification interne.
+    args:
+        x_frontend_key (str | None): La clé d'authentification interne envoyée par le proxy Flask.
+    return:
+        None: Ne retourne rien, lève une exception HTTP en cas d'échec d'authentification.
+    """
     expected = os.environ.get("AUTH_INTERNAL_KEY", "")
     if not expected or not x_frontend_key:
-        raise HTTPException(status_code=503, detail="Authentification interne non configurée")
+        raise HTTPException(
+            status_code=503,
+            detail="Authentification interne non configurée",
+        )
     if not compare_digest(x_frontend_key, expected):
-        raise HTTPException(status_code=403, detail="Accès refusé")
+        raise HTTPException(
+            status_code=403,
+            detail="Accès refusé",
+        )
 
 
 def set_cookie(response: Response, token: str) -> None:
-    """Envoie un cookie de session opaque au navigateur via Flask."""
+    """
+    Envoie un cookie de session opaque au navigateur via Flask.
+    
+    args:
+        response (Response): L'objet de réponse FastAPI pour définir le cookie.
+        token (str): Le jeton de session opaque à envoyer au navigateur.
+    return:
+        None: Ne retourne rien, le cookie est défini directement sur l'objet de réponse.
+    """
     response.set_cookie(
-        COOKIE_NAME, token, httponly=True, samesite="lax",
-        secure=os.environ.get("AUTH_COOKIE_SECURE", "true").lower() == "true",
-        max_age=86400, path="/",
+        COOKIE_NAME,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=os.environ.get(
+            "AUTH_COOKIE_SECURE",
+            "true",
+        ).lower() == "true",
+        max_age=3600, path="/",
     )
 
 
 def current_session(db: Session, token: str | None) -> UserSession:
-    """Exige une session temporaire ou pleinement validée."""
+    """
+    Exige une session temporaire ou pleinement validée.
+    
+    raise:
+        HTTPException: En cas d'absence ou d'expiration de la session.
+    args:
+        db (Session): La session SQL pour la requête.
+        token (str | None): Le jeton de session opaque envoyé par le client.
+    return:
+        UserSession: La session utilisateur correspondante si elle existe et est valide.
+    """
     entry = get_session(db, token)
     if entry is None:
         raise HTTPException(status_code=401, detail="Session absente ou expirée")
@@ -92,17 +119,36 @@ def register(
     response: Response,
     db: Session = Depends(database)
 ) -> dict[str, str]:
-    """Crée le compte et une session provisoire exigeant l'enrôlement TOTP."""
+    """
+    Crée le compte et une session provisoire exigeant l'enrôlement TOTP.
+    
+    raise:
+        HTTPException: En cas de conflit lors de la création du compte.
+    args:
+        data (Registration): Les informations d'enregistrement fournies par le client.
+        response (Response): L'objet de réponse FastAPI pour définir le cookie.
+        db (Session): La session SQL pour la requête.
+    return:
+        dict[str, str]: Un dictionnaire indiquant la prochaine étape du flux d'authentification.
+    """
     user = Users(username=data.username.strip(), email=str(data.email).lower(), permissions="basic")
     try:
         db.add(user)
         db.flush()
-        db.add(UsersPassword(user_id=user.id, password_hash=HASHER.hash(data.password)))
+        db.add(
+            UsersPassword(
+                user_id=user.id,
+                password_hash=HASHER.hash(data.password),
+            )
+        )
         token = create_session(db, user)
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise HTTPException(status_code=409, detail="Compte indisponible") from error
+        raise HTTPException(
+            status_code=409,
+            detail="Compte indisponible",
+        ) from error
     set_cookie(response, token)
     return {"next": "enroll"}
 

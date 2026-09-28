@@ -12,7 +12,7 @@ environment_file="$host_project_root/migration/.env.migr"
 databases=("main" "users" )
 
 usage() {
-    echo "Usage : $0 --generate|--run-dry|--apply"
+    echo "Usage : $0 (--generate|--run-dry|--apply) [--force-recreate]"
 }
 
 select_databases() {
@@ -44,8 +44,13 @@ check_prerequisites() {
     [[ -f "$environment_file" ]] || { echo "Fichier $environment_file absent." >&2; exit 1; }
     "$container_engine" network inspect "$network" >/dev/null 2>&1 \
         || { echo "Réseau $network absent." >&2; exit 1; }
-    if ! "$container_engine" image inspect "$image" >/dev/null 2>&1; then
+    if [[ "$force_recreate" == true ]] || ! "$container_engine" image inspect "$image" >/dev/null 2>&1; then
+        local build_args=()
+        if [[ "$force_recreate" == true ]]; then
+            build_args+=(--no-cache)
+        fi
         "$container_engine" build \
+            "${build_args[@]}" \
             -f "$host_project_root/migration/Dockerfile" \
             -t "$image" \
             "$host_project_root"
@@ -53,7 +58,16 @@ check_prerequisites() {
 }
 
 run_alembic() {
+    local user_args=()
+    if [[ "$1" == "revision" ]]; then
+        if [[ "$("$container_engine" info --format '{{.Host.Security.Rootless}}')" != "true" ]]; then
+            echo "La génération de migrations requiert Podman rootless." >&2
+            exit 1
+        fi
+        user_args=(--user 0)
+    fi
     "$container_engine" run --rm \
+        "${user_args[@]}" \
         --network "$network" \
         --env-file "$environment_file" \
         -v "$host_migration_dir:$migration_dir:z" \
@@ -83,8 +97,22 @@ apply_migrations() {
     run_alembic upgrade "${revision:-head}"
 }
 
-action="${1:---help}"
-[[ "$action" =~ ^--(generate|run-dry|apply)$ ]] || { usage; exit 1; }
+action=""
+force_recreate=false
+for argument in "$@"; do
+    case "$argument" in
+        --generate|--run-dry|--apply)
+            [[ -z "$action" ]] || { usage; exit 1; }
+            action="$argument"
+            ;;
+        --force-recreate)
+            [[ "$force_recreate" == false ]] || { usage; exit 1; }
+            force_recreate=true
+            ;;
+        *) usage; exit 1 ;;
+    esac
+done
+[[ -n "$action" ]] || { usage; exit 1; }
 check_prerequisites
 select_databases
 

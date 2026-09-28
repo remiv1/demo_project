@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Événements{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/events.js') }}" defer></script>{% endblock %}
+{% block content %}
+<section class="events-layout">
+  <div class="events-heading"><div><span class="eyebrow">En direct</span><h1>Événements</h1></div><span id="connection-status" class="connection-status" role="status">Connexion…</span></div>
+  <div class="events-toolbar"><span>Dernières notifications</span><form method="post" action="{{ url_for('user.logout') }}" hx-post="{{ url_for('user.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="secondary">Se déconnecter</button></form></div>
+  <ol id="events" class="event-list" aria-live="polite"></ol>
+</section>
+{% endblock %}

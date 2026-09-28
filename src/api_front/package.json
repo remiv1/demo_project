@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "sass static/scss/main.scss static/css/main.css --style=compressed --no-source-map && node -e \"require('fs').copyFileSync('node_modules/htmx.org/dist/htmx.min.js','static/js/htmx.min.js')\""
+  },
+  "dependencies": {
+    "htmx.org": "^2.0.8"
+  },
+  "devDependencies": {
+    "sass": "^1.90.0"
+  }
+}

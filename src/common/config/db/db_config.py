@@ -59,9 +59,9 @@ class DatabaseConfig:
             str: URL de connexion à la base de données.
         """
         if safe_pass == getenv('SAFEPASS') and safe_pass is not None:
-            return (f'postgresql://{self.user_db}:{self.__user_password}'
+            return (f'postgresql+psycopg2://{self.user_db}:{self.__user_password}'
                     f'@{self.host}:{self.port}/{self.db_name}')
-        return (f'postgresql://{self.user_db}:REDACTED'
+        return (f'postgresql+psycopg2://{self.user_db}:REDACTED'
                 f'@{self.host}:{self.port}/{self.db_name}')
 
     def get_user_password(self) -> str:

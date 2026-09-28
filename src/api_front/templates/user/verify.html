@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Vérifier le code{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-aside"><span class="eyebrow">03 / Sécurité</span><h1>Une dernière étape.</h1><p>Confirmez votre identité avec votre application d'authentification.</p></div>
+  <div class="auth-panel">
+    <h2>Vérification</h2>
+    <form method="post" action="{{ url_for('user.verify') }}" hx-post="{{ url_for('user.verify') }}" hx-target="#feedback" hx-swap="innerHTML">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="code">Code à 6 chiffres</label><input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" autofocus required>
+      <div id="feedback" aria-live="polite"></div>
+      <button type="submit">Vérifier et accéder</button>
+    </form>
+    <p class="auth-switch"><a href="{{ url_for('user.login_page') }}">Revenir à la connexion</a></p>
+  </div>
+</section>
+{% endblock %}

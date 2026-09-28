@@ -2,13 +2,13 @@
 
 ## Redis Streams
 
-Le flux Redis est un bus d'événements entre l'ingestion et les consommateurs. Un événement n'est publié qu'après la validation de l'écriture du séisme en base de données :
+Le backend relaie les messages JSON du WebSocket EMSC vers Redis. Le worker effectue ensuite l'ingestion ; après commit, il ajoute la notification au Stream `new_event` et acquitte le message brut :
 
 ```text
-ingestion EMSC -> validation -> écriture PostgreSQL -> commit -> Redis Stream
+WebSocket EMSC -> ingest:earthquakes:raw -> worker -> PostgreSQL/commit -> new_event -> Flask /ws/events
 ```
 
-Chaque message utilise le modèle `NewSeismMessage`. Il contient l'identifiant EMSC, l'identifiant en base (`db_id`), la date et les informations utiles au filtrage. Le contenu est sérialisé en JSON dans le champ `payload` du message Redis afin de préserver le format ISO 8601 des dates et les valeurs textuelles de l'importance.
+Le message EMSC brut est sérialisé en JSON dans le champ `payload` du Stream d'ingestion. La notification sérialisée dans le champ `payload` de `new_event` contient `type` et `event` ; Flask lui ajoute l'ID Redis avant envoi au navigateur. Les routes Redis de développement utilisent toujours `NewSeismMessage` ; leur format ne définit pas celui du relais EMSC.
 
 ### Groupes de consommateurs
 
@@ -17,18 +17,22 @@ Un groupe est créé avec une position de départ explicite :
 - `0-0` permet de relire tous les messages déjà présents dans le Stream. C'est le choix par défaut pour éviter une perte silencieuse lors du démarrage d'un nouveau consommateur.
 - `$` permet de ne consommer que les messages publiés après la création du groupe. Il convient aux consommateurs qui ne nécessitent pas de rattrapage.
 
-Les consommateurs lisent les messages avec leur nom de consommateur, puis les acquittent une fois le traitement terminé. Un message non acquitté reste en attente dans le groupe et peut être repris ultérieurement.
+Les consommateurs lisent les messages avec leur nom de consommateur, puis les acquittent après commit et publication de la notification. Le worker reprend au démarrage les messages en attente de son propre consommateur.
 
 ### Rôles Redis
 
 Les ACL Redis séparent les responsabilités :
 
-- l'utilisateur worker crée les groupes et publie les messages Stream ;
-- l'utilisateur application consomme, inspecte les messages en attente et les acquitte ;
+- l'utilisateur worker publie les événements EMSC, consomme les Streams et écrit dans `new_event` ;
+- l'utilisateur application lit les notifications du Stream dans Flask ;
 - l'utilisateur monitor dispose d'un accès en lecture.
 
 Les routes de gestion des Streams sont des routes internes de développement. Elles ne doivent pas être exposées à des clients non authentifiés en production.
 
 ### Fiabilité de la publication
 
-La première implémentation publiera l'événement après le commit PostgreSQL. Une interruption entre ces deux opérations peut donc laisser un séisme enregistré sans événement Redis associé. Une table d'outbox transactionnelle, relayée vers Redis par un processus dédié, sera ajoutée lorsque le pipeline d'ingestion en base sera en place.
+Les repositories `Earthquakes` et `Flood` ne sont pas encore implémentés : aucun commit, acquittement ou `new_event` n'est produit pour ces messages. Chaque WebSocket lit `new_event` avec son propre curseur, sans groupe partagé : tous les utilisateurs connectés reçoivent les mêmes notifications. À la première connexion, Flask se place après la dernière notification ; lors d'une reconnexion dans la même page, le navigateur transmet le dernier ID reçu et Flask reprend après cet ID. Un rechargement complet perd ce curseur. Aucune limite de rétention n'est encore configurée : le Stream grandira tant qu'il n'est pas nettoyé ; une politique de rétention future réduira la fenêtre de reprise.
+
+Après implémentation des repositories, une interruption entre commit, publication et acquittement pourra produire des notifications en double ; l'ingestion devra être idempotente et une outbox sera nécessaire pour garantir la diffusion.
+
+La route `/ws/events` de Flask exige une session contenant `user_id` et `otp_verified = True`, ainsi qu'une origine correspondant à l'hôte appelé. La connexion utilisateur et la vérification OTP restent à implémenter : la route est donc fermée dans l'état actuel.

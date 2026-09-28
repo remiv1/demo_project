@@ -9,6 +9,8 @@ from common.models.sqlalchemy.common import UserMixin
 from common.config.db import BaseUsers, CASCADE_OPTION
 if TYPE_CHECKING:
     from common.models.sqlalchemy.users.session import UserSession
+    from common.models.sqlalchemy.users.password import UsersPassword
+    from common.models.sqlalchemy.users.otp import UserOTP
 
 class Users(UserMixin, BaseUsers):
     """
@@ -78,4 +80,10 @@ class Users(UserMixin, BaseUsers):
         back_populates="user",
         cascade=CASCADE_OPTION,
         passive_deletes=True
+    )
+    passwords: Mapped[list["UsersPassword"]] = relationship(
+        "UsersPassword", back_populates="user", cascade=CASCADE_OPTION
+    )
+    otp: Mapped["UserOTP | None"] = relationship(
+        "UserOTP", back_populates="user", uselist=False, cascade=CASCADE_OPTION
     )

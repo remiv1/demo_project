@@ -1,0 +1,1 @@
+"""Fonctionnalités de présentation Flask."""

@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, UUID as PG_UUID
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from common.config.db import BaseUsers, CASCADE_OPTION
+from common.config.db import BaseUsers
 from common.models.sqlalchemy.common import UserMixin
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class UsersPassword(UserMixin, BaseUsers):
     )
     user_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("auth_schema.users.id", ondelete=CASCADE_OPTION),
+        ForeignKey("auth_schema.users.id", ondelete="CASCADE"),
         nullable=False,
         comment="Identifiant de l'utilisateur associé"
     )
@@ -64,6 +64,4 @@ class UsersPassword(UserMixin, BaseUsers):
     user: Mapped["Users"] = relationship(
         "Users",
         back_populates="passwords",
-        cascade=CASCADE_OPTION,
-        passive_deletes=True
     )

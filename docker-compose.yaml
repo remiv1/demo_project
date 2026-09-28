@@ -11,6 +11,10 @@ services:
       - ./src/database/.env.postgres
       - ./src/api_back/.env
       - ./src/redis/.env.redis
+    environment:
+      AUTH_INTERNAL_KEY: ${AUTH_INTERNAL_KEY:-}
+      OTP_ENCRYPTION_KEY: ${OTP_ENCRYPTION_KEY:-}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
     ports:
       - "8000:8000"
     volumes:
@@ -40,6 +44,9 @@ services:
       - ./src/api_front/.env
       - ./src/database/.env.postgres
       - ./src/redis/.env.redis
+    environment:
+      AUTH_INTERNAL_KEY: ${AUTH_INTERNAL_KEY:-}
+      API_BACK_URL: http://api-back:8000
     ports:
       - "8001:8001"
     depends_on:

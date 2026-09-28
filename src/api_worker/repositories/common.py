@@ -11,6 +11,6 @@ class IngestionRepository(ABC):
     """Contrat d'ingestion transactionnelle vers PostgreSQL."""
 
     @abstractmethod
-    def ingest(self, payload: dict[str, Any]) -> None:
-        """Ingère un événement et valide sa transaction PostgreSQL."""
+    def ingest(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Valide la transaction PostgreSQL et retourne l'événement à notifier."""
         raise RepositoryNotImplementedError

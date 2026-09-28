@@ -1,0 +1,219 @@
+$ink: #17282b;
+$teal: #11766e;
+$line: #c9d8d5;
+$surface: #fff;
+$accent: #d86b54;
+
+:root {
+    color-scheme: light;
+}
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    color: $ink;
+    background: #f2f7f6;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+}
+a {
+    color: $teal;
+    text-underline-offset: 3px;
+}
+button, input {
+    font: inherit;
+}
+button {
+    min-height: 44px;
+    padding: .7rem 1.25rem;
+    border: 1px solid $teal;
+    border-radius: 3px;
+    color: $surface;
+    background: $teal;
+    cursor: pointer;
+    font-weight: 700;
+}
+button:hover {
+    background: #0d5f58;
+}
+button:focus-visible, a:focus-visible, input:focus-visible {
+    outline: 3px solid $accent;
+    outline-offset: 2px;
+}
+button.secondary {
+    color: $teal;
+    background: $surface;
+}
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 72px;
+    padding: 0 clamp(1rem, 5vw, 5rem);
+    background: $surface;
+    border-bottom: 1px solid $line;
+}
+.brand {
+    color: $ink;
+    font-family: Georgia, serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.brand-mark {
+    color: $accent;
+}
+nav {
+    display: flex;
+    gap: 1.4rem;
+    font-size: .95rem;
+}
+.page-content {
+    max-width: 1260px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 6vw, 5rem);
+}
+.auth-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+    gap: clamp(2rem, 8vw, 8rem);
+    align-items: start;
+}
+.auth-aside {
+    padding-top: 1.75rem;
+}
+.eyebrow {
+    color: $teal;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+h1 {
+    margin: 1.25rem 0;
+    font: normal clamp(2.5rem, 5rem, 4.5rem)/1.08 Georgia, serif;
+}
+h2 {
+    margin: 0 0 1.5rem;
+    font: normal 1.6rem/1.2 Georgia, serif;
+}
+.auth-aside p {
+    max-width: 26rem;
+    color: #546664;
+    line-height: 1.6;
+}
+.auth-panel {
+    min-width: 0;
+    padding: clamp(1.4rem, 4vw, 2.5rem);
+    background: $surface;
+    border: 1px solid $line;
+    border-radius: 4px;
+    box-shadow: 0 12px 34px #17282b0d;
+}
+.auth-panel p {
+    line-height: 1.55;
+}
+label {
+    display: block;
+    margin: 1.25rem 0 .45rem;
+    font-size: .89rem;
+    font-weight: 700;
+}
+input:not([type=hidden]) {
+    width: 100%;
+    min-height: 46px;
+    padding: .65rem .8rem;
+    border: 1px solid #aabebb;
+    border-radius: 3px;
+    background: $surface;
+    color: $ink;
+}
+form > button {
+    margin-top: 1.5rem;
+}
+.auth-switch {
+    margin: 2rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid $line;
+    font-size: .91rem;
+}
+.form-feedback {
+    padding: .8rem;
+    color: #8b362a;
+    background: #fff1ee;
+    border-left: 3px solid $accent;
+}
+.enroll-secret {
+    margin-top: 1.2rem;
+    padding: 1rem;
+    border: 1px solid $line;
+    background: #f2f7f6;
+}
+.enroll-secret img {
+    display: block;
+    width: min(100%, 16rem);
+    height: auto;
+    margin: 0 auto 1rem;
+}
+.enroll-secret span {
+    display: block;
+    margin-bottom: .5rem;
+    font-size: .85rem;
+}
+.enroll-secret code {
+    overflow-wrap: anywhere;
+    user-select: all;
+}
+.events-heading, .events-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.events-heading h1 {
+    margin: .5rem 0 2rem;
+}
+.events-toolbar {
+    border-block: 1px solid $line;
+    padding: 1rem 0;
+}
+.events-toolbar button {
+    margin: 0;
+}
+.connection-status {
+    color: $teal;
+    font-size: .84rem;
+}
+.event-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.event-list li {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 1rem 0;
+    border-bottom: 1px solid $line;
+    overflow-wrap: anywhere;
+}
+.event-list small {
+    color: #546664;
+    min-width: 5rem;
+}
+@media (max-width: 750px) {
+    .auth-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .auth-aside {
+        padding: 0;
+    }
+    .site-header {
+        padding-inline: 1rem;
+    }
+    h1 {
+        font-size: 2.7rem;
+    }
+}

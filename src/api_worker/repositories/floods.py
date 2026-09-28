@@ -5,6 +5,6 @@ from .common import IngestionRepository, RepositoryNotImplementedError
 class Flood(IngestionRepository):
     """Repository des inondations."""
 
-    def ingest(self, payload: dict[str, Any]) -> None:
+    def ingest(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Ingère une inondation."""
         raise RepositoryNotImplementedError("Le repository flood n'est pas prêt.")

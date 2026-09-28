@@ -9,4 +9,5 @@ exec gunicorn \
 	--control-socket /tmp/gunicorn/gunicorn.ctl \
 	--bind "0.0.0.0:${PORT:-8001}" \
 	--workers "${WORKERS:-2}" \
+	--threads "${THREADS:-20}" \
 	main:app

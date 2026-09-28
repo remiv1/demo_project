@@ -1,11 +1,9 @@
 """Moteur Alembic généré pour la base users."""
 
 import sys
-import importlib
 import os
 import urllib.parse
 from logging.config import fileConfig
-from typing import Any
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -13,7 +11,7 @@ from sqlalchemy import engine_from_config, pool
 sys.path.insert(0, "/app")
 
 from common.config.db import BaseUsers  # pylint: disable=C0413
-from common.models.sqlalchemy.users import Users, UsersPassword, UserSession # pylint: disable=W0611, C0413
+from common.models.sqlalchemy.users import Users, UsersPassword, UserSession, UserOTP # pylint: disable=W0611, C0413
 
 configuration = context.config  # pylint: disable=E1101
 password = urllib.parse.quote(os.getenv("POSTGRES_PASSWORD_MIGR", ""), safe="")

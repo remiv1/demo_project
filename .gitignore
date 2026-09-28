@@ -5,3 +5,6 @@ all_responses.parquet
 .env.postgres
 .env.redis
 *.acl
+.env
+**/.env*
+!**/.env.example

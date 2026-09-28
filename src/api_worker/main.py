@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from redis import Redis
-from redis.exceptions import ResponseError
+from redis.exceptions import RedisError, ResponseError
 
 from common.config.redis import RedisConfig, RedisUser
 
@@ -92,8 +92,39 @@ def ingest_message(
         None
     """
     payload: dict[str, Any] = json.loads(fields["payload"])
-    repository.ingest(payload)
+    event = repository.ingest(payload)
+    redis_client.xadd(
+        stream.notification_stream,
+        {
+            "payload": json.dumps(
+                {"type": stream.repository, "event": event},
+                separators=(",", ":"),
+            )
+        },
+    )
     redis_client.xack(stream.name, stream.group, message_id)
+
+
+def process_entries(
+    redis_client: Redis,
+    stream: StreamConfig,
+    repository: IngestionRepository,
+    entries: list[tuple[str, list[tuple[str, dict[str, str]]]]],
+) -> str | None:
+    """Traite les entrées reçues et retourne l'identifiant de la dernière."""
+    last_id = None
+    for _, messages in entries:
+        for message_id, fields in messages:
+            last_id = message_id
+            try:
+                ingest_message(redis_client, stream, repository, message_id, fields)
+            except (KeyError, ValueError, RepositoryNotImplementedError, RedisError):
+                LOGGER.exception(
+                    "Message non acquitté: flux=%s id=%s",
+                    stream.name,
+                    message_id,
+                )
+    return last_id
 
 
 def consume_stream(
@@ -111,6 +142,21 @@ def consume_stream(
     Returns:
         None
     """
+    pending_id = "0"
+    while True:
+        pending = cast(
+            list[tuple[str, list[tuple[str, dict[str, str]]]]],
+            redis_client.xreadgroup(
+                stream.group,
+                stream.consumer,
+                {stream.name: pending_id},
+                count=stream.count,
+            ),
+        )
+        pending_id = process_entries(redis_client, stream, repository, pending)
+        if pending_id is None:
+            break
+
     while True:
         entries = cast(
             list[tuple[str, list[tuple[str, dict[str, str]]]]],
@@ -122,16 +168,7 @@ def consume_stream(
                 block=stream.block_ms,
             ),
         )
-        for _, messages in entries:
-            for message_id, fields in messages:
-                try:
-                    ingest_message(redis_client, stream, repository, message_id, fields)
-                except (KeyError, ValueError, RepositoryNotImplementedError):
-                    LOGGER.exception(
-                        "Message non acquitté: flux=%s id=%s",
-                        stream.name,
-                        message_id,
-                    )
+        process_entries(redis_client, stream, repository, entries)
 
 
 def main() -> None:

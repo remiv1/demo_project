@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Créer un compte{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-aside"><span class="eyebrow">01 / Accès</span><h1>Créer un compte</h1><p>Suivez les événements qui comptent pour vous.</p></div>
+  <div class="auth-panel">
+    <h2>Inscription</h2>
+    <form method="post" action="{{ url_for('user.register') }}" hx-post="{{ url_for('user.register') }}" hx-target="#feedback" hx-swap="innerHTML">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="username">Nom d'utilisateur</label><input id="username" name="username" autocomplete="username" minlength="3" maxlength="50" required>
+      <label for="email">Adresse e-mail</label><input id="email" name="email" type="email" autocomplete="email" required>
+      <label for="password">Mot de passe</label><input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
+      <div id="feedback" aria-live="polite"></div>
+      <button type="submit">Créer mon compte</button>
+    </form>
+    <p class="auth-switch">Déjà inscrit ? <a href="{{ url_for('user.login_page') }}">Se connecter</a></p>
+  </div>
+</section>
+{% endblock %}

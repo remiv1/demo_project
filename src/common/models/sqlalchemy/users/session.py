@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import Integer, String, DateTime, ForeignKey, UUID as PG_UUID
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from common.config.db import BaseUsers, CASCADE_OPTION
+from common.config.db import BaseUsers
 from common.models.sqlalchemy.common import UserMixin
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class UserSession(UserMixin, BaseUsers):
     )
     user_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("auth_schema.users.id", ondelete=CASCADE_OPTION),
+        ForeignKey("auth_schema.users.id", ondelete="CASCADE"),
         nullable=False,
         comment="Identifiant de l'utilisateur associé à la session"
     )
@@ -55,6 +55,10 @@ class UserSession(UserMixin, BaseUsers):
         nullable=True,
         comment="Date de révocation de la session"
     )
+    verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+        comment="Validation TOTP de la session"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.now(timezone.utc),
@@ -65,8 +69,6 @@ class UserSession(UserMixin, BaseUsers):
     user: Mapped["Users"] = relationship(
         "Users",
         back_populates="sessions",
-        cascade=CASCADE_OPTION,
-        passive_deletes=True
     )
 
     @property

@@ -22,6 +22,7 @@ class StreamConfig:
     group: str
     consumer: str
     repository: str
+    notification_stream: str = "new_event"
     count: int = 10
     block_ms: int = 5_000
 
@@ -44,6 +45,7 @@ def load_streams(config_path: Path) -> list[StreamConfig]:
             group=stream["group"],
             consumer=stream["consumer"],
             repository=stream["repository"],
+            notification_stream=stream.get("notification_stream", "new_event"),
             count=stream.get("count", 10),
             block_ms=stream.get("block_ms", 5_000),
         )

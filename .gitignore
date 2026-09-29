@@ -8,3 +8,4 @@ all_responses.parquet
 .env
 **/.env*
 !**/.env.example
+**/secret.yaml

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: api-worker-config
+  namespace: demo-project
+
+data:
+  worker.conf: |
+    [worker]
+    name = "ingestion-worker"
+
+    [[streams]]
+    name = "ingest:earthquakes:raw"
+    group = "ingestion"
+    consumer = "ingestion-worker"
+    repository = "earthquakes"
+    notification_stream = "new_event"
+    count = 10
+    block_ms = 5000
+
+    [[streams]]
+    name = "ingest:flood:raw"
+    group = "ingestion"
+    consumer = "ingestion-worker"
+    repository = "flood"
+    notification_stream = "new_event"
+    count = 10
+    block_ms = 5000

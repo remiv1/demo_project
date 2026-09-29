@@ -323,3 +323,33 @@ Il y a déjà environ 80 % de la migration vers k3s
 | service.yaml    | Comment les autres pods le contactent ? |
 | configmap.yaml  | Quelles variables non sensibles ?       |
 | secret.yaml     | Quels mots de passe et clés ?           |
+
+## Build des images et push vers ghcr
+
+```bash
+# Build des images
+podman compose build <service>
+
+# Retrouver le nom de l'image construite
+podman images | grep <service>
+
+# Tag de l'image
+podman tag localhost/<service> ghcr.io/<username>/<service>:latest
+
+# Push de l'image
+podman push ghcr.io/<username>/<service>:latest
+```
+
+## Enregistrement des secrets
+
+Pour mettre des secrets dans `secret.yaml`, il faut encoder les valeurs en base64 et les ajouter sous la clé `data`. Par exemple :
+
+```bash
+printf %s 'postgres' | base64 -w0
+```
+
+Pour retrouver la véritable valeur à partir de la base64, utilisez :
+
+```bash
+printf %s 'cG9zdGdyZXM=' | base64 -d
+```

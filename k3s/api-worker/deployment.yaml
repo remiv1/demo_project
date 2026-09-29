@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api-worker
+  namespace: demo-project
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-worker
+
+  template:
+    metadata:
+      labels:
+        app: api-worker
+    spec:
+      restartPolicy: Always
+      automountServiceAccountToken: false
+      containers:
+      - name: api-worker
+        image: ghcr.io/remiv1/esmc-api-worker:1.0.0
+        envFrom:
+        - configMapRef:
+            name: postgres-config
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_WORKER_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: REDIS_WORKER_USERNAME
+        - name: REDIS_WORKER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: REDIS_WORKER_PASSWORD
+        - name: POSTGRES_PASSWORD_APP
+          valueFrom:
+            secretKeyRef:
+              name: env-postgres
+              key: POSTGRES_PASSWORD_APP
+        - name: POSTGRES_PASSWORD_SECURE
+          valueFrom:
+            secretKeyRef:
+              name: env-postgres
+              key: POSTGRES_PASSWORD_SECURE
+        - name: SAFEPASS
+          valueFrom:
+            secretKeyRef:
+              name: env-postgres
+              key: SAFEPASS
+        volumeMounts:
+        - name: worker-config
+          mountPath: /etc/worker/worker.conf
+          subPath: worker.conf
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+            ephemeral-storage: "256Mi"
+          limits:
+            cpu: "200m"
+            memory: "512Mi"
+            ephemeral-storage: "512Mi"
+
+      volumes:
+      - name: worker-config
+        configMap:
+          name: api-worker-config
+          items:
+          - key: worker.conf
+            path: worker.conf
+      

@@ -185,22 +185,289 @@ form > button {
     color: $teal;
     font-size: .84rem;
 }
-.event-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+.map-page {
+    max-width: none;
+    padding: 1rem 1.5rem;
 }
-.event-list li {
+.map-workspace {
+    --map-border: #c9d8d5;
+    --map-accent: #bb4c37;
+    letter-spacing: 0;
+}
+.map-heading, .map-toolbar {
     display: flex;
-    gap: 1rem;
-    align-items: baseline;
-    padding: 1rem 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+}
+.map-heading h1 {
+    margin: .25rem 0 .75rem;
+    font: 600 1.7rem/1.2 Georgia, serif;
+}
+.map-heading > span, .map-toolbar {
+    font-size: .85rem;
+    font-variant-numeric: tabular-nums;
+}
+.map-toolbar {
+    padding: .65rem 0;
+    border-top: 1px solid var(--map-border);
+}
+.map-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+}
+.map-legend-dot {
+    width: .65rem;
+    height: .65rem;
+    border-radius: 50%;
+    background: var(--map-accent);
+}
+.map-stage {
+    display: flex;
+    position: relative;
+    isolation: isolate;
+    height: max(28rem, calc(100dvh - 15rem));
+    border-block: 1px solid var(--map-border);
+}
+#event-map {
+    min-width: 0;
+    flex: 1;
+    height: 100%;
+    background: #dce8ed;
+    font-family: inherit;
+}
+.map-filters {
+    flex: 0 0 5.5rem;
+    background: $surface;
+    border-right: 1px solid var(--map-border);
+    overflow-y: auto;
+}
+.map-filters[open] {
+    flex-basis: 17rem;
+}
+.map-filters summary {
+    padding: 1rem .85rem;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: .9rem;
+}
+.map-filters summary:focus-visible {
+    outline: 3px solid $accent;
+    outline-offset: -3px;
+}
+.map-filter-content {
+    padding: 0 1rem 1rem;
+}
+.map-filter-content fieldset {
+    min-width: 0;
+    margin: .5rem 0 1.25rem;
+    padding: 0;
+    border: 0;
+}
+.map-filter-content legend {
+    margin-bottom: .8rem;
+    font-weight: 700;
+    font-size: .85rem;
+}
+.map-filter-content label {
+    display: block;
+    margin-bottom: .35rem;
+    font-size: .82rem;
+}
+.map-filter-content input:not([type='checkbox']) {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.6rem;
+    padding: .55rem;
+    margin: .3rem 0 .8rem;
+    border: 1px solid var(--map-border);
+    border-radius: 3px;
+    background: $surface;
+    color: $ink;
+}
+.map-filter-content button {
+    width: 100%;
+    margin: .4rem 0;
+    padding-inline: .5rem;
+    font-size: .85rem;
+}
+.map-filter-content button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+.map-filter-content .map-check {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+.map-check input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    accent-color: $teal;
+}
+.map-magnitudes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+}
+.map-unit-label {
+    color: #546664;
+    font-size: .75rem;
+}
+.map-status, .map-error {
+    margin: .6rem 0 0;
+    font-size: .85rem;
+}
+.map-error {
+    color: #9e302c;
+}
+.map-point {
+    background: var(--map-accent);
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px #17282b60;
+}
+.map-cluster {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: $teal;
+    color: white;
+    box-shadow: 0 1px 5px #17282b50;
+    font-size: .8rem;
+    font-weight: 700;
+}
+.map-popup {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+}
+.map-popup h2 {
+    margin: 0 0 .75rem;
+    font-size: 1.15rem;
+}
+.map-popup dl {
+    margin: 0;
+    font-size: .82rem;
+}
+.map-popup dt {
+    margin-top: .45rem;
+    color: #546664;
+}
+.map-popup dd {
+    margin: .1rem 0 0;
+}
+@media (max-width: 750px) {
+    .map-page {
+        padding: .75rem;
+    }
+    .map-stage {
+        height: max(25rem, calc(100dvh - 17rem));
+        padding-top: 3rem;
+    }
+    .map-filters {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        max-height: 100%;
+        border: 1px solid var(--map-border);
+    }
+    .map-filters[open] {
+        width: min(19rem, 100%);
+        box-shadow: 4px 4px 12px #17282b25;
+    }
+    .map-filters summary {
+        padding-block: .85rem;
+    }
+    .map-page .leaflet-popup-content {
+        max-width: min(260px, calc(100vw - 80px));
+    }
+}
+.event-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid $line;
+    background: $surface;
+    overscroll-behavior-x: contain;
+}
+.event-table {
+    width: 100%;
+    min-width: 58rem;
+    border-collapse: collapse;
+    text-align: left;
+}
+.event-table th, .event-table td {
+    padding: .85rem .75rem;
     border-bottom: 1px solid $line;
+    vertical-align: top;
+}
+.event-table th {
+    color: $ink;
+    background: #eaf2f1;
+    font-size: .8rem;
+    font-weight: 700;
+}
+.event-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+.event-table tbody tr:hover {
+    background: #f6faf9;
+}
+.event-table time {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.event-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    padding: .25rem .5rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 700;
+    line-height: 1.35;
     overflow-wrap: anywhere;
 }
-.event-list small {
+.event-badge--earthquake {
+    color: #075d55;
+    border-color: #a8d4ce;
+    background: #e5f4f1;
+}
+.event-badge--flood {
+    color: #8a3d2b;
+    border-color: #edc0b5;
+    background: #fff0eb;
+}
+.event-badge--geography {
+    color: $ink;
+    border-color: $line;
+    background: #f2f7f6;
+}
+.event-geography .event-badge + .event-badge {
+    margin-inline-start: .4rem;
+}
+.event-metrics {
+    min-width: 17rem;
+    font-variant-numeric: tabular-nums;
+}
+.event-metrics > * {
+    display: block;
+}
+.event-metrics > * + * {
+    margin-top: .3rem;
+}
+.event-metrics span {
     color: #546664;
-    min-width: 5rem;
 }
 @media (max-width: 750px) {
     .auth-layout {

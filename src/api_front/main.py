@@ -12,6 +12,7 @@ from flask_wtf.csrf import CSRFProtect
 
 from blueprints.user import blueprint as user_blueprint
 from blueprints.user.utils import authenticated
+from blueprints.map import blueprint as map_blueprint
 
 from redis import Redis
 
@@ -20,6 +21,7 @@ app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 csrf = CSRFProtect(app)
 sock = Sock(app)
 app.register_blueprint(user_blueprint)
+app.register_blueprint(map_blueprint)
 NOTIFICATION_STREAM = "new_event"
 
 

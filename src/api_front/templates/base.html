@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Événements{% endblock %} · Signal</title>
+  {% block styles %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <script src="{{ url_for('static', filename='js/htmx.min.js') }}" defer></script>
   {% block scripts %}{% endblock %}
@@ -13,9 +14,10 @@
     <a class="brand" href="{{ url_for('index') }}">Signal<span class="brand-mark">/</span></a>
     <nav aria-label="Navigation principale">
       <a href="{{ url_for('user.account') }}">Flux</a>
-      <a href="{{ url_for('user.login_page') }}">Connexion</a>
+      <a href="{{ url_for('map.page') }}">Carte</a>
+      <a href="{{ url_for('user.login') }}">Connexion</a>
     </nav>
   </header>
-  <main class="page-content">{% block content %}{% endblock %}</main>
+  <main class="page-content {% block page_class %}{% endblock %}">{% block content %}{% endblock %}</main>
 </body>
 </html>

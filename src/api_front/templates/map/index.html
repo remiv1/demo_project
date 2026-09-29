@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Carte des séismes{% endblock %}
+{% block page_class %}map-page{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+{% endblock %}
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/supercluster@8.0.1/dist/supercluster.min.js" integrity="sha384-HkQmq7PC2BUVUkCsRUnOyzpliMb5M4pVPnjEiyI92tdS8buRHN6ZnehP1n1Acj84" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/overlapping-marker-spiderfier-leaflet@0.2.7/dist/oms.min.js" integrity="sha384-s0kHoLlhi8Ugbrmme6mAU2m9DyIyhH87HotNgzjungpjIsYlxOXuOFJPE6gUaCxD" crossorigin="anonymous" defer></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+<section class="map-workspace" aria-label="Carte des séismes">
+  <header class="map-heading">
+    <h1>Carte des séismes</h1>
+    <span id="map-count" role="status">Aucun événement chargé</span>
+  </header>
+  <div class="map-toolbar">
+    <span id="map-period">Aucune période chargée</span>
+    <span class="map-legend"><span class="map-legend-dot" aria-hidden="true"></span>Séisme</span>
+  </div>
+  <div class="map-stage">
+    <details id="map-filters" class="map-filters" open>
+      <summary>Filtres</summary>
+      <div class="map-filter-content">
+        <form id="map-period-form" data-endpoint="{{ url_for('map.events') }}">
+          <fieldset>
+            <legend>Période UTC</legend>
+            <label for="map-start">Date de début</label>
+            <input id="map-start" name="start" type="date" value="{{ start }}" required>
+            <label for="map-end">Date de fin incluse</label>
+            <input id="map-end" name="end" type="date" value="{{ end }}" required>
+            <button id="map-apply" type="submit">Appliquer la période</button>
+          </fieldset>
+        </form>
+        <fieldset id="map-local-filters" disabled>
+          <legend>Événements</legend>
+          <label class="map-check"><input id="map-earthquakes" type="checkbox" checked> Séismes</label>
+          <div class="map-magnitudes">
+            <label for="map-mag-min">Magnitude min.
+              <input id="map-mag-min" type="number" step="any" placeholder="Sans limite">
+            </label>
+            <label for="map-mag-max">Magnitude max.
+              <input id="map-mag-max" type="number" step="any" placeholder="Sans limite">
+            </label>
+          </div>
+          <span class="map-unit-label">Valeurs brutes · toutes échelles</span>
+        </fieldset>
+      </div>
+    </details>
+        <div id="event-map" role="region" aria-label="Carte interactive des événements"
+          data-tile-url="{{ tile_url | default('https://tile.openstreetmap.org/{z}/{x}/{y}.png') }}"
+          data-tile-attribution="{{ tile_attribution | default('&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors') }}"></div>
+  </div>
+  <p id="map-status" class="map-status" role="status" aria-live="polite"></p>
+  <p id="map-error" class="map-error" role="alert" hidden></p>
+  <noscript>JavaScript est nécessaire pour afficher la carte.</noscript>
+</section>
+{% endblock %}

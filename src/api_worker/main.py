@@ -11,12 +11,12 @@ from redis import Redis
 from redis.exceptions import RedisError, ResponseError
 
 from common.config.redis import RedisConfig, RedisUser
-
-from .config import StreamConfig, load_streams
-from .repositories import (
+from common.repositories import (
     REPOSITORIES,
     RepositoryNotImplementedError,
 )
+
+from .config import StreamConfig, load_streams
 
 
 LOGGER = logging.getLogger(__name__)
@@ -101,7 +101,17 @@ def ingest_message(
         if not isinstance(payload, dict):
             raise ValueError("Objet JSON attendu dans data pour le flux EMSC")
     event = repository.ingest(payload)  # type: ignore
-    notification_event = payload if stream.repository == "earthquakes" else event
+    if stream.repository == "earthquakes":
+        properties = payload["properties"]
+        geographic_zones = repository.get_geographic_zones(  # type: ignore[attr-defined]
+            properties["lon"], properties["lat"]
+        )
+        notification_event = {
+            **payload,
+            "properties": {**properties, **geographic_zones},
+        }
+    else:
+        notification_event = event
     redis_client.xadd(
         stream.notification_stream,
         {

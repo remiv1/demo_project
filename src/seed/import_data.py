@@ -18,7 +18,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import Session
 
-from api_worker.repositories.earthquakes import EarthquakesRepo
+from common.repositories.earthquakes import EarthquakesRepo
 
 
 LOGGER = logging.getLogger(__name__)

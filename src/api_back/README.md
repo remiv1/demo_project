@@ -1,5 +1,19 @@
 # API backend
 
+## API cartographique
+
+`GET /api/v1/events?start=YYYY-MM-DD&end=YYYY-MM-DD` retourne une `FeatureCollection`
+GeoJSON pour les séismes. La clé interne `X-Frontend-Key` et une session TOTP validée
+sont obligatoires. La période, en journées UTC incluses, est limitée à un mois calendaire
+glissant (même jour du mois suivant, ajusté au dernier jour disponible).
+
+La date de survenue `emsc.initial_datetime` décide de l'appartenance à la période.
+La version retenue est celle dont `emsc_details.event_datetime` est la plus récente,
+puis l'identifiant de détail le plus élevé en cas d'égalité. Elle peut avoir été révisée
+après la période sélectionnée. Les pays/continents sont résolus avec `ST_Covers`.
+La requête ne modifie pas l'ingestion et ne limite pas silencieusement le nombre de points.
+Les coordonnées GeoJSON sont ordonnées longitude, latitude ; les heures sont sérialisées en UTC.
+
 ## Redis Streams
 
 Le backend relaie les messages JSON du WebSocket EMSC vers Redis. Le worker effectue ensuite l'ingestion ; après commit, il ajoute la notification au Stream `new_event` et acquitte le message brut :
@@ -8,7 +22,7 @@ Le backend relaie les messages JSON du WebSocket EMSC vers Redis. Le worker effe
 WebSocket EMSC -> ingest:earthquakes:raw -> worker -> PostgreSQL/commit -> new_event -> Flask /ws/events
 ```
 
-Le message EMSC brut est sérialisé en JSON dans le champ `payload` du Stream d'ingestion. La notification sérialisée dans le champ `payload` de `new_event` contient `type` et `event` ; Flask lui ajoute l'ID Redis avant envoi au navigateur. Les routes Redis de développement utilisent toujours `NewSeismMessage` ; leur format ne définit pas celui du relais EMSC.
+Le message EMSC brut est sérialisé en JSON dans le champ `payload` du Stream d'ingestion. La notification sérialisée dans le champ `payload` de `new_event` contient `type` et `event` ; pour les séismes, le worker enrichit `event.properties` avec `country` et `continent`, résolus avec `ST_Covers` (valeurs `null` si aucune zone ne correspond). Flask ajoute ensuite l'ID Redis avant envoi au navigateur. Les routes Redis de développement utilisent toujours `NewSeismMessage` ; leur format ne définit pas celui du relais EMSC.
 
 ### Groupes de consommateurs
 

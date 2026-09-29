@@ -3,6 +3,7 @@
 from fastapi.routing import APIRouter
 from .redis import redis_router
 from .user import router as user_router
+from .events import router as events_router
 
 router = APIRouter(
     prefix="/v1",
@@ -10,3 +11,4 @@ router = APIRouter(
 )
 router.include_router(redis_router)
 router.include_router(user_router)
+router.include_router(events_router)

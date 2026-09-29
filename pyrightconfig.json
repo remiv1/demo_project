@@ -1,4 +1,4 @@
 {
-  "extraPaths": ["src"],
+  "extraPaths": ["src", "src/api_front"],
   "stubPath": "typings",
 }

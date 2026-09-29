@@ -2,15 +2,18 @@
 
 from httpx import Response as HTTPResponse
 from flask import Blueprint, Response, abort, redirect, render_template, request, url_for
+from werkzeug.exceptions import MethodNotAllowed
 from werkzeug.wrappers import Response as WerkzeugResponse
 
-from .utils import authenticated, call_backend, forward_cookie, qr_code_png
+from utils import authenticated_required
+
+from .utils import call_backend, forward_cookie, qr_code_png
 
 
 blueprint = Blueprint("user", __name__, url_prefix="/user")
 FEEDBACK_TEMPLATE = "user/_feedback.html"
 ENROLL_PAGE = "user.enroll_page"
-LOGIN_PAGE = "user.login_page"
+LOGIN_PAGE = "user.login"
 
 
 @blueprint.after_request
@@ -59,15 +62,16 @@ def register() -> Response | str | WerkzeugResponse:
     return response
 
 
-@blueprint.get("/login")
-def login_page() -> str:
-    """Affiche la connexion par mot de passe."""
-    return render_template("user/login.html")
-
-
-@blueprint.post("/login")
-def login() -> Response | str | WerkzeugResponse:
-    """Démarre une session provisoire après vérification du mot de passe."""
+@blueprint.route("/login", methods=["GET", "POST"])
+def login() -> str | WerkzeugResponse:
+    """
+    Affiche la connexion par mot de passe ou démarre une session provisoire
+    après vérification du mot de passe.
+    """
+    if request.method == "GET":
+        return render_template("user/login.html")
+    if request.method != "POST":
+        raise MethodNotAllowed()
     result = call_backend("POST", "login", {
         "email": request.form.get("email", ""),
         "password": request.form.get("password", ""),
@@ -141,10 +145,9 @@ def verify() -> Response | str | WerkzeugResponse:
 
 
 @blueprint.get("/account")
+@authenticated_required
 def account() -> Response | str | WerkzeugResponse:
     """N'affiche la page privée qu'après validation backend de la session."""
-    if not authenticated():
-        return redirect(url_for(LOGIN_PAGE))
     return render_template("user/account.html")
 
 

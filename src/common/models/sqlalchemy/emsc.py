@@ -79,6 +79,12 @@ class EMSCDetails(CommonMixin):
     __table_args__ = (
         CheckConstraint("longitude BETWEEN -180 AND 180", name="emsc_longitude"),
         CheckConstraint("latitude BETWEEN -90 AND 90", name="emsc_latitude"),
+        Index(
+            "ix_emsc_details_latest_version",
+            "emsc_id",
+            "event_datetime",
+            "id",
+        ),
         Index("ix_emsc_details_position", "position", postgresql_using="gist"),
         {"schema": "app_schema"},
     )

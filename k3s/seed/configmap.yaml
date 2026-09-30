@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: emsc-seed-config
+  namespace: demo-project
+data:
+  infra.conf: |
+    [ingestion]
+    history_start = "2024-01-01T00:00:00Z"
+    timeout = 30

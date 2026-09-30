@@ -8,3 +8,6 @@ metadata:
 data:
   APP_UID: "1000"
   APP_GID: "1000"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"

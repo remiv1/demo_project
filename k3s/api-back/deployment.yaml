@@ -6,7 +6,7 @@ metadata:
   namespace: demo-project
 
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: api-back
@@ -19,13 +19,23 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: api-back
-        image: ghcr.io/remiv1/emsc-api-back:1.0.1
+        image: ghcr.io/remiv1/emsc-api-back:1.0.2
         ports:
           - containerPort: 8000
             protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 5
+          timeoutSeconds: 2
         envFrom:
           - configMapRef:
               name: postgres-config
+          - configMapRef:
+              name: configmap-api-common
+          - secretRef:
+              name: redis-credentials
         env:
           - name: POSTGRES_PASSWORD_APP
             valueFrom:

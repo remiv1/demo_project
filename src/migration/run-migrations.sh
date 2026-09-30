@@ -6,13 +6,14 @@ project_name="demo_project"
 container_engine="podman"
 network="${project_name}_emsc-migrations"
 image="emsc-migrations"
+registry_image="ghcr.io/remiv1/emsc-migrations"
 container_root="/app"
 host_project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 environment_file="$host_project_root/migration/.env.migr"
 databases=("main" "users" )
 
 usage() {
-    echo "Usage : $0 (--generate|--run-dry|--apply) [--force-recreate]"
+    echo "Usage : $0 (--generate|--run-dry|--apply|--push-image) [--force-recreate]"
 }
 
 select_databases() {
@@ -40,21 +41,35 @@ configure_database() {
     host_migration_dir="$host_project_root/migration/$database_id"
 }
 
+build_image() {
+    local target_image="$1"
+    local build_args=()
+    if [[ "$force_recreate" == true ]]; then
+        build_args+=(--no-cache)
+    fi
+    "$container_engine" build \
+        "${build_args[@]}" \
+        -f "$host_project_root/migration/Dockerfile" \
+        -t "$target_image" \
+        "$host_project_root"
+}
+
 check_prerequisites() {
     [[ -f "$environment_file" ]] || { echo "Fichier $environment_file absent." >&2; exit 1; }
     "$container_engine" network inspect "$network" >/dev/null 2>&1 \
         || { echo "Réseau $network absent." >&2; exit 1; }
     if [[ "$force_recreate" == true ]] || ! "$container_engine" image inspect "$image" >/dev/null 2>&1; then
-        local build_args=()
-        if [[ "$force_recreate" == true ]]; then
-            build_args+=(--no-cache)
-        fi
-        "$container_engine" build \
-            "${build_args[@]}" \
-            -f "$host_project_root/migration/Dockerfile" \
-            -t "$image" \
-            "$host_project_root"
+        build_image "$image"
     fi
+}
+
+push_image() {
+    local tag="${IMAGE_TAG:-}"
+    [[ "$tag" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]] \
+        || { echo "IMAGE_TAG doit contenir un tag d'image valide." >&2; exit 1; }
+    local target_image="$registry_image:$tag"
+    build_image "$target_image"
+    "$container_engine" push "$target_image"
 }
 
 run_alembic() {
@@ -101,7 +116,7 @@ action=""
 force_recreate=false
 for argument in "$@"; do
     case "$argument" in
-        --generate|--run-dry|--apply)
+        --generate|--run-dry|--apply|--push-image)
             [[ -z "$action" ]] || { usage; exit 1; }
             action="$argument"
             ;;
@@ -113,6 +128,10 @@ for argument in "$@"; do
     esac
 done
 [[ -n "$action" ]] || { usage; exit 1; }
+if [[ "$action" == --push-image ]]; then
+    push_image
+    exit 0
+fi
 check_prerequisites
 select_databases
 

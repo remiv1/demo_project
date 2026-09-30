@@ -17,8 +17,6 @@ services:
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
     ports:
       - "8000:8000"
-    volumes:
-      - ./src/common:/app/common:rw,z
     depends_on:
       postgres:
         condition: service_healthy

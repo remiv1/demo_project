@@ -12,8 +12,6 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt \
 
 COPY --chown=root:root src/seed/import_data.py /app/import_data.py
 COPY --chown=root:root src/common /app/common
-COPY --chown=root:root src/api_worker/__init__.py /app/api_worker/__init__.py
-COPY --chown=root:root src/api_worker/repositories /app/api_worker/repositories
 
 ENV PYTHONPATH=/app
 

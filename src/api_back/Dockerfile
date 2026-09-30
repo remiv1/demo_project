@@ -16,6 +16,7 @@ RUN apt-get update && \
     adduser --system --uid "${APP_UID}" --ingroup appuser --home /app appuser
 
 COPY --chown=root:root src/api_back /app/api_back
+COPY --chown=root:root src/common /app/common
 
 RUN chmod 0555 /app/api_back/start.sh
 

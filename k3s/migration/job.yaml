@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: emsc-migrations
+  namespace: demo-project
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: migrations
+          image: ghcr.io/remiv1/emsc-migrations:1.0.0
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              alembic -c /app/main/alembic.ini upgrade head
+              alembic -c /app/users/alembic.ini upgrade head
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          env:
+            - name: POSTGRES_PASSWORD_MIGR
+              valueFrom:
+                secretKeyRef:
+                  name: env-postgres
+                  key: POSTGRES_PASSWORD_MIGR
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+              ephemeral-storage: "512Mi"

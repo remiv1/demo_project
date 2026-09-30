@@ -2,40 +2,38 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: api-front
+  name: api-collect
   namespace: demo-project
 
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: api-front
+      app: api-collect
   template:
     metadata:
       labels:
-        app: api-front
+        app: api-collect
     spec:
       restartPolicy: Always
       automountServiceAccountToken: false
       containers:
-      - name: api-front
-        image: ghcr.io/remiv1/emsc-api-front:1.0.0
+      - name: api-collect
+        image: ghcr.io/remiv1/emsc-api-collect:1.0.0
         envFrom:
           - configMapRef:
               name: configmap-api-common
-          - configMapRef:
-              name: configmap-api-front
-          - secretRef:
-              name: api-front-auth
-        ports:
-          - containerPort: 8001
-            protocol: TCP
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8001
-          periodSeconds: 10
-          timeoutSeconds: 2
+        env:
+          - name: REDIS_WORKER_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: redis-credentials
+                key: REDIS_WORKER_USERNAME
+          - name: REDIS_WORKER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-credentials
+                key: REDIS_WORKER_PASSWORD
         resources:
           requests:
             cpu: "100m"

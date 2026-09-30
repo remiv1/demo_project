@@ -24,9 +24,9 @@ spec:
         image: ghcr.io/remiv1/emsc-postgres:1.0.0
         envFrom:
           - configMapRef:
-            name: postgres-config
+              name: postgres-config
           - secretRef:
-            name: env-postgres
+              name: env-postgres
         volumeMounts:
           - name: postgres-data
             mountPath: /var/lib/postgresql

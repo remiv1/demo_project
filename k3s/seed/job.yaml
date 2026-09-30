@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: emsc-seed
+  namespace: demo-project
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: seed
+          image: ghcr.io/remiv1/emsc-seed:1.0.0
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          env:
+            - name: POSTGRES_PASSWORD_APP
+              valueFrom:
+                secretKeyRef:
+                  name: env-postgres
+                  key: POSTGRES_PASSWORD_APP
+          volumeMounts:
+            - name: seed-config
+              mountPath: /app/infra.conf
+              subPath: infra.conf
+              readOnly: true
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+              ephemeral-storage: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+              ephemeral-storage: "1Gi"
+      volumes:
+        - name: seed-config
+          configMap:
+            name: emsc-seed-config

@@ -25,39 +25,45 @@ spec:
         - configMapRef:
             name: postgres-config
         env:
-        - name: REDIS_HOST
-          value: redis
-        - name: REDIS_PORT
-          value: "6379"
-        - name: REDIS_WORKER_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: redis-credentials
-              key: REDIS_WORKER_USERNAME
-        - name: REDIS_WORKER_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: redis-credentials
-              key: REDIS_WORKER_PASSWORD
-        - name: POSTGRES_PASSWORD_APP
-          valueFrom:
-            secretKeyRef:
-              name: env-postgres
-              key: POSTGRES_PASSWORD_APP
-        - name: POSTGRES_PASSWORD_SECURE
-          valueFrom:
-            secretKeyRef:
-              name: env-postgres
-              key: POSTGRES_PASSWORD_SECURE
-        - name: SAFEPASS
-          valueFrom:
-            secretKeyRef:
-              name: env-postgres
-              key: SAFEPASS
+          - name: REDIS_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: api-worker-config
+                key: REDIS_HOST
+          - name: REDIS_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: api-worker-config
+                key: REDIS_PORT
+          - name: REDIS_WORKER_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: redis-credentials
+                key: REDIS_WORKER_USERNAME
+          - name: REDIS_WORKER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-credentials
+                key: REDIS_WORKER_PASSWORD
+          - name: POSTGRES_PASSWORD_APP
+            valueFrom:
+              secretKeyRef:
+                name: env-postgres
+                key: POSTGRES_PASSWORD_APP
+          - name: POSTGRES_PASSWORD_SECURE
+            valueFrom:
+              secretKeyRef:
+                name: env-postgres
+                key: POSTGRES_PASSWORD_SECURE
+          - name: SAFEPASS
+            valueFrom:
+              secretKeyRef:
+                name: api-auth-common
+                key: SAFEPASS
         volumeMounts:
-        - name: worker-config
-          mountPath: /etc/worker/worker.conf
-          subPath: worker.conf
+          - name: worker-config
+            mountPath: /etc/worker/worker.conf
+            subPath: worker.conf
         resources:
           requests:
             cpu: "100m"

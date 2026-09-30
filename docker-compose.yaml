@@ -35,6 +35,26 @@ services:
       - default
       - emsc-network
 
+  api-collect:
+    build:
+      context: .
+      dockerfile: src/api_collect/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    container_name: api-collect
+    env_file:
+      - ./src/redis/.env.redis
+    environment:
+      REDIS_HOST: redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - default
+      - emsc-network
+
   api-front:
     build:
       context: ./src/api_front

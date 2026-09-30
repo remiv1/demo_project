@@ -1,0 +1,1 @@
+"""Collecteur EMSC autonome."""

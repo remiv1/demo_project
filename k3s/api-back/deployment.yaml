@@ -1,2 +1,58 @@
 apiVersion: apps/v1
 kind: Deployment
+
+metadata:
+  name: api-back
+  namespace: demo-project
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-back
+  template:
+    metadata:
+      labels:
+        app: api-back
+    spec:
+      restartPolicy: Always
+      automountServiceAccountToken: false
+      containers:
+      - name: api-back
+        image: ghcr.io/remiv1/emsc-api-back:1.0.1
+        ports:
+          - containerPort: 8000
+            protocol: TCP
+        envFrom:
+          - configMapRef:
+              name: postgres-config
+        env:
+          - name: POSTGRES_PASSWORD_APP
+            valueFrom:
+              secretKeyRef:
+                name: env-postgres
+                key: POSTGRES_PASSWORD_APP
+          - name: POSTGRES_PASSWORD_SECURE
+            valueFrom:
+              secretKeyRef:
+                name: env-postgres
+                key: POSTGRES_PASSWORD_SECURE
+          - name: AUTH_INTERNAL_KEY
+            valueFrom:
+              secretKeyRef:
+                name: api-auth-common
+                key: AUTH_INTERNAL_KEY
+          - name: OTP_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: api-auth-common
+                key: OTP_ENCRYPTION_KEY
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+            ephemeral-storage: "256Mi"
+          limits:
+            cpu: "200m"
+            memory: "512Mi"
+            ephemeral-storage: "512Mi"

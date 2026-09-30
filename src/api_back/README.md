@@ -16,7 +16,7 @@ Les coordonnées GeoJSON sont ordonnées longitude, latitude ; les heures sont s
 
 ## Redis Streams
 
-Le backend relaie les messages JSON du WebSocket EMSC vers Redis. Le worker effectue ensuite l'ingestion ; après commit, il ajoute la notification au Stream `new_event` et acquitte le message brut :
+Le service `api-collect` relaie les messages JSON du WebSocket EMSC vers Redis, indépendamment du backend. Il doit rester à une seule réplique pour éviter les publications en double. Le worker effectue ensuite l'ingestion ; après commit, il ajoute la notification au Stream `new_event` et acquitte le message brut :
 
 ```text
 WebSocket EMSC -> ingest:earthquakes:raw -> worker -> PostgreSQL/commit -> new_event -> Flask /ws/events

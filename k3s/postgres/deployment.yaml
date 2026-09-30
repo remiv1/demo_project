@@ -21,7 +21,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: db-main
-        image: postgres:18
+        image: ghcr.io/remiv1/emsc-postgres:1.0.0
         envFrom:
           - configMapRef:
             name: postgres-config
@@ -29,7 +29,7 @@ spec:
             name: env-postgres
         volumeMounts:
           - name: postgres-data
-            mountPath: /var/lib/postgresql/data
+            mountPath: /var/lib/postgresql
         resources:
           requests:
             cpu: "250m"

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: configmap-api-front
+  namespace: demo-project
+
+data:
+  PORT: "8001"
+  WORKERS: "2"

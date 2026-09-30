@@ -1,4 +1,4 @@
-"""Relais des événements EMSC vers le flux Redis d'ingestion."""
+"""Collecte des événements EMSC vers le flux Redis d'ingestion."""
 
 import asyncio
 import json
@@ -39,3 +39,8 @@ async def relay_emsc_events() -> None:
             await asyncio.sleep(5)
     finally:
         await redis_client.aclose()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(relay_emsc_events())

@@ -9,3 +9,4 @@ all_responses.parquet
 **/.env*
 !**/.env.example
 **/secret.yaml
+**/secret-common.yaml

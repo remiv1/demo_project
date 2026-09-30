@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: configmap-api-common
+  namespace: demo-project
+
+data:
+  APP_UID: "1000"
+  APP_GID: "1000"

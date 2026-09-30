@@ -18,7 +18,7 @@ schema = "app_schema"
 migration_schema = "migr_main"
 metadata = "common.WorkingBase.metadata"
 model_modules = ["common.models"]
-extensions = ["unaccent", "uuid-ossp", "pgcrypto", "pg_stat_statements"]
+extensions = ["unaccent", "uuid-ossp", "pgcrypto", "pg_stat_statements", "postgis"]
 
 [[database.databases]]
 id = "users"
@@ -28,7 +28,7 @@ migration_schema = "migr_users"
 metadata = "common.SecureBase.metadata"
 model_modules = ["common.models"]
 secure_access = true
-extensions = ["unaccent", "uuid-ossp", "pgcrypto"]
+extensions = ["unaccent", "uuid-ossp", "pgcrypto", "postgis"]
 
 [environment]
 create = true

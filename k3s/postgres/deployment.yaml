@@ -22,6 +22,16 @@ spec:
       containers:
       - name: db-main
         image: ghcr.io/remiv1/emsc-postgres:1.0.0
+        readinessProbe:
+          exec:
+            command:
+              - pg_isready
+              - -h
+              - 127.0.0.1
+              - -p
+              - "5432"
+          periodSeconds: 5
+          timeoutSeconds: 2
         envFrom:
           - configMapRef:
               name: postgres-config

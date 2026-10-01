@@ -1,6 +1,22 @@
 # Guide de migration Podman Compose → k3s
 
-## Installer Kompose sur Fedora
+## K3S
+
+### Installation de K3S
+
+```bash
+curl -sfL https://get.k3s.io | sh -
+```
+
+Vérification :
+
+```bash
+k3s --version
+```
+
+## Kompose
+
+### Installer sur Fedora
 
 ```bash
 curl -L https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
@@ -15,7 +31,7 @@ Vérification :
 kompose version
 ```
 
-## Utiliser Kompose
+### Utiliser Kompose
 
 À partir d'un fichier :
 
@@ -324,7 +340,7 @@ Il y a déjà environ 80 % de la migration vers k3s
 | configmap.yaml  | Quelles variables non sensibles ?       |
 | secret.yaml     | Quels mots de passe et clés ?           |
 
-## Build des images et push vers ghcr
+### Build des images et push vers ghcr
 
 ```bash
 # Build des images
@@ -340,7 +356,7 @@ podman tag localhost/<service> ghcr.io/<username>/<service>:latest
 podman push ghcr.io/<username>/<service>:latest
 ```
 
-## Enregistrement des secrets
+### Enregistrement des secrets
 
 Pour mettre des secrets dans `secret.yaml`, il faut encoder les valeurs en base64 et les ajouter sous la clé `data`. Par exemple :
 

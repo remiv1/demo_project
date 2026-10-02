@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: configmap-api-common
+  namespace: {{ .Release.Namespace }}
+
+data:
+  {{- range $name, $value := .Values.commonEnv }}
+  {{ $name }}: {{ $value | quote }}
+  {{- end }}

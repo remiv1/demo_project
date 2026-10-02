@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api-collect
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  replicas: {{ ternary 0 .Values.apiCollect.replicaCount .Values.suspended }}
+  selector:
+    matchLabels:
+      app: api-collect
+  template:
+    metadata:
+      labels:
+        app: api-collect
+    spec:
+      restartPolicy: Always
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: api-collect
+        image: "{{ .Values.apiCollect.image.repository }}:{{ .Values.apiCollect.image.tag }}"
+        imagePullPolicy: {{ .Values.apiCollect.image.pullPolicy }}
+        envFrom:
+          - configMapRef:
+              name: configmap-api-common
+        env:
+          - name: REDIS_WORKER_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.redis }}
+                key: REDIS_WORKER_USERNAME
+          - name: REDIS_WORKER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.redis }}
+                key: REDIS_WORKER_PASSWORD
+        resources:
+          {{- toYaml .Values.apiCollect.resources | nindent 10 }}

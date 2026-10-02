@@ -1,0 +1,37 @@
+{{- if and .Values.migration.enabled (not .Values.suspended) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: emsc-migrations
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: {{ .Values.migration.backoffLimit }}
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: migrations
+          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+          imagePullPolicy: {{ .Values.migration.image.pullPolicy }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              alembic -c /app/main/alembic.ini upgrade head
+              alembic -c /app/users/alembic.ini upgrade head
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          env:
+            - name: POSTGRES_PASSWORD_MIGR
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgres }}
+                  key: POSTGRES_PASSWORD_MIGR
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+{{- end }}

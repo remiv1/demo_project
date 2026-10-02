@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api-worker
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  replicas: {{ ternary 0 .Values.apiWorker.replicaCount .Values.suspended }}
+  selector:
+    matchLabels:
+      app: api-worker
+
+  template:
+    metadata:
+      labels:
+        app: api-worker
+    spec:
+      restartPolicy: Always
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: api-worker
+        image: "{{ .Values.apiWorker.image.repository }}:{{ .Values.apiWorker.image.tag }}"
+        imagePullPolicy: {{ .Values.apiWorker.image.pullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: postgres-config
+        env:
+          - name: REDIS_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: api-worker-config
+                key: REDIS_HOST
+          - name: REDIS_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: api-worker-config
+                key: REDIS_PORT
+          - name: REDIS_WORKER_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.redis }}
+                key: REDIS_WORKER_USERNAME
+          - name: REDIS_WORKER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.redis }}
+                key: REDIS_WORKER_PASSWORD
+          - name: POSTGRES_PASSWORD_APP
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.postgres }}
+                key: POSTGRES_PASSWORD_APP
+          - name: POSTGRES_PASSWORD_SECURE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.postgres }}
+                key: POSTGRES_PASSWORD_SECURE
+          - name: SAFEPASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.auth }}
+                key: SAFEPASS
+        volumeMounts:
+          - name: worker-config
+            mountPath: /etc/worker/worker.conf
+            subPath: worker.conf
+        resources:
+          {{- toYaml .Values.apiWorker.resources | nindent 10 }}
+
+      volumes:
+      - name: worker-config
+        configMap:
+          name: api-worker-config
+          items:
+          - key: worker.conf
+            path: worker.conf
+      

@@ -1,0 +1,18 @@
+{{- if not .Values.redis.persistence.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.redis.persistence.claimName }}
+  namespace: {{ .Release.Namespace }}
+  {{- if .Values.redis.persistence.keep }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
+spec:
+  storageClassName: {{ .Values.redis.persistence.storageClassName | quote }}
+  accessModes:
+    {{- toYaml .Values.redis.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size | quote }}
+{{- end }}

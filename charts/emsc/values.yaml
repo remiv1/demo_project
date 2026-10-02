@@ -1,0 +1,263 @@
+# Configuration du chart ; les secrets restent dans des fichiers privés séparés.
+suspended: false
+automountServiceAccountToken: false
+imagePullSecrets: []
+
+secrets:
+  postgres: env-postgres
+  redis: redis-credentials
+  auth: api-auth-common
+  frontend: api-front-auth
+
+ingress:
+  enabled: true
+  className: traefik
+  host: emsc.testing.audit-io.fr
+  path: /
+  pathType: Prefix
+  tls: []
+
+postgres:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/remiv1/emsc-postgres
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+    clusterIP: None
+  persistence:
+    existingClaim: ""
+    claimName: postgres-data
+    storageClassName: local-path
+    accessModes: [ReadWriteOnce]
+    size: 10Gi
+    keep: true
+    mountPath: /var/lib/postgresql
+  env:
+    POSTGRES_DB: postgres
+    POSTGRES_DB_MAIN: emsc_main
+    POSTGRES_DB_USERS: emsc_users
+    POSTGRES_INITDB_ARGS: "--encoding=UTF8 -c shared_preload_libraries=pg_stat_statements -c password_encryption=scram-sha-256"
+    POSTGRES_PORT: "5432"
+    POSTGRES_USER: postgres
+    POSTGRES_USER_APP: emsc
+    POSTGRES_USER_MIGR: migr
+    POSTGRES_USER_SECURE: secure
+    POSTGRES_HOST: postgres
+    DB_HOST: postgres
+    DB_PORT: "5432"
+  readinessProbe:
+    exec:
+      command: [pg_isready, "-h", "127.0.0.1", "-p", "5432"]
+    periodSeconds: 5
+    timeoutSeconds: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+      ephemeral-storage: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+      ephemeral-storage: "2Gi"
+
+redis:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/remiv1/emsc-redis
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 6379
+  strategy:
+    type: Recreate
+  persistence:
+    existingClaim: ""
+    claimName: redis-data
+    storageClassName: local-path
+    accessModes: [ReadWriteOnce]
+    size: 5Gi
+    keep: true
+    mountPath: /data
+  livenessProbe:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --user "$REDIS_USERNAME" PING | grep -q PONG
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "2Gi"
+      ephemeral-storage: "1Gi"
+    limits:
+      cpu: "500m"
+      memory: "3Gi"
+      ephemeral-storage: "3Gi"
+
+commonEnv:
+  APP_UID: "1000"
+  APP_GID: "1000"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+apiBack:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/remiv1/emsc-api-back
+    tag: "1.0.2"
+    pullPolicy: IfNotPresent
+  service:
+    port: 8000
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    periodSeconds: 5
+    timeoutSeconds: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 66
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+      ephemeral-storage: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+      ephemeral-storage: "512Mi"
+
+apiFront:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/remiv1/emsc-api-front
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 8001
+  env:
+    PORT: "8001"
+    WORKERS: "2"
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8001
+    periodSeconds: 10
+    timeoutSeconds: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 66
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+      ephemeral-storage: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+      ephemeral-storage: "512Mi"
+
+apiWorker:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/remiv1/esmc-api-worker
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  env:
+    DB_HOST: postgres
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+  config: |
+    [worker]
+    name = "ingestion-worker"
+
+    [[streams]]
+    name = "ingest:earthquakes:raw"
+    group = "ingestion"
+    consumer = "ingestion-worker"
+    repository = "earthquakes"
+    notification_stream = "new_event"
+    count = 10
+    block_ms = 5000
+
+    [[streams]]
+    name = "ingest:flood:raw"
+    group = "ingestion"
+    consumer = "ingestion-worker"
+    repository = "flood"
+    notification_stream = "new_event"
+    count = 10
+    block_ms = 5000
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+      ephemeral-storage: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+      ephemeral-storage: "512Mi"
+
+apiCollect:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/remiv1/emsc-api-collect
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+      ephemeral-storage: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+      ephemeral-storage: "512Mi"
+
+migration:
+  enabled: false
+  image:
+    repository: ghcr.io/remiv1/emsc-migrations
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  backoffLimit: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+      ephemeral-storage: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+      ephemeral-storage: "512Mi"
+
+seed:
+  enabled: false
+  image:
+    repository: ghcr.io/remiv1/emsc-seed
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  backoffLimit: 1
+  historyStart: "2024-01-01T00:00:00Z"
+  historyEnd: ""
+  timeout: 30
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+      ephemeral-storage: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+      ephemeral-storage: "1Gi"

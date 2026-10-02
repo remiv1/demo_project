@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api-front
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  {{- if or .Values.suspended (not .Values.apiFront.autoscaling.enabled) }}
+  replicas: {{ ternary 0 .Values.apiFront.replicaCount .Values.suspended }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: api-front
+  template:
+    metadata:
+      labels:
+        app: api-front
+    spec:
+      restartPolicy: Always
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: api-front
+        image: "{{ .Values.apiFront.image.repository }}:{{ .Values.apiFront.image.tag }}"
+        imagePullPolicy: {{ .Values.apiFront.image.pullPolicy }}
+        envFrom:
+          - configMapRef:
+              name: configmap-api-common
+          - configMapRef:
+              name: configmap-api-front
+          - secretRef:
+              name: {{ .Values.secrets.frontend }}
+        env:
+          - name: AUTH_INTERNAL_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.auth }}
+                key: AUTH_INTERNAL_KEY
+        ports:
+          - containerPort: {{ .Values.apiFront.service.port }}
+            protocol: TCP
+        readinessProbe:
+          {{- toYaml .Values.apiFront.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.apiFront.resources | nindent 10 }}

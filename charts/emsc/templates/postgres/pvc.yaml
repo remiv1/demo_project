@@ -1,0 +1,18 @@
+{{- if not .Values.postgres.persistence.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.postgres.persistence.claimName }}
+  namespace: {{ .Release.Namespace }}
+  {{- if .Values.postgres.persistence.keep }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
+spec:
+  storageClassName: {{ .Values.postgres.persistence.storageClassName | quote }}
+  accessModes:
+    {{- toYaml .Values.postgres.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.postgres.persistence.size | quote }}
+{{- end }}

@@ -1,0 +1,23 @@
+{{- if and .Values.apiFront.autoscaling.enabled (not .Values.suspended) }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+
+metadata:
+  name: api-front
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-front
+  minReplicas: {{ .Values.apiFront.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.apiFront.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.apiFront.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}

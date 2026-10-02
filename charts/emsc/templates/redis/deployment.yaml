@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ ternary 0 .Values.redis.replicaCount .Values.suspended }}
+  strategy:
+    {{- toYaml .Values.redis.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: redis
+          image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.redis }}
+          ports:
+            - name: redis
+              containerPort: {{ .Values.redis.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.redis.livenessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          volumeMounts:
+            - name: redis-data
+              mountPath: {{ .Values.redis.persistence.mountPath }}
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: {{ default .Values.redis.persistence.claimName .Values.redis.persistence.existingClaim }}

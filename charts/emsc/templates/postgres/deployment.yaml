@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: postgres
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  serviceName: postgres
+  replicas: {{ ternary 0 .Values.postgres.replicaCount .Values.suspended }}
+  selector:
+    matchLabels:
+      app: postgres
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: db-main
+        image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+        imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+        readinessProbe:
+          {{- toYaml .Values.postgres.readinessProbe | nindent 10 }}
+        envFrom:
+          - configMapRef:
+              name: postgres-config
+          - secretRef:
+              name: {{ .Values.secrets.postgres }}
+        volumeMounts:
+          - name: postgres-data
+            mountPath: {{ .Values.postgres.persistence.mountPath }}
+        resources:
+          {{- toYaml .Values.postgres.resources | nindent 10 }}
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: {{ default .Values.postgres.persistence.claimName .Values.postgres.persistence.existingClaim }}

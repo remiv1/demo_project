@@ -1,0 +1,45 @@
+{{- if and .Values.seed.enabled (not .Values.suspended) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: emsc-seed
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: {{ .Values.seed.backoffLimit }}
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: seed
+          image: "{{ .Values.seed.image.repository }}:{{ .Values.seed.image.tag }}"
+          imagePullPolicy: {{ .Values.seed.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          env:
+            - name: POSTGRES_PASSWORD_APP
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgres }}
+                  key: POSTGRES_PASSWORD_APP
+            {{- with .Values.seed.historyEnd }}
+            - name: HISTORY_END
+              value: {{ . | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: seed-config
+              mountPath: /app/infra.conf
+              subPath: infra.conf
+              readOnly: true
+          resources:
+            {{- toYaml .Values.seed.resources | nindent 12 }}
+      volumes:
+        - name: seed-config
+          configMap:
+            name: emsc-seed-config
+{{- end }}

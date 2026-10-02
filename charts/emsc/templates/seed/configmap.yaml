@@ -1,0 +1,12 @@
+{{- if and .Values.seed.enabled (not .Values.suspended) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: emsc-seed-config
+  namespace: {{ .Release.Namespace }}
+data:
+  infra.conf: |
+    [ingestion]
+    history_start = {{ .Values.seed.historyStart | toJson }}
+    timeout = {{ .Values.seed.timeout }}
+  {{- end }}

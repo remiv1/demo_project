@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api-back
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  {{- if or .Values.suspended (not .Values.apiBack.autoscaling.enabled) }}
+  replicas: {{ ternary 0 .Values.apiBack.replicaCount .Values.suspended }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: api-back
+  template:
+    metadata:
+      labels:
+        app: api-back
+    spec:
+      restartPolicy: Always
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: api-back
+        image: "{{ .Values.apiBack.image.repository }}:{{ .Values.apiBack.image.tag }}"
+        imagePullPolicy: {{ .Values.apiBack.image.pullPolicy }}
+        ports:
+          - containerPort: {{ .Values.apiBack.service.port }}
+            protocol: TCP
+        readinessProbe:
+          {{- toYaml .Values.apiBack.readinessProbe | nindent 10 }}
+        envFrom:
+          - configMapRef:
+              name: postgres-config
+          - configMapRef:
+              name: configmap-api-common
+          - secretRef:
+              name: {{ .Values.secrets.redis }}
+        env:
+          - name: POSTGRES_PASSWORD_APP
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.postgres }}
+                key: POSTGRES_PASSWORD_APP
+          - name: POSTGRES_PASSWORD_SECURE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.postgres }}
+                key: POSTGRES_PASSWORD_SECURE
+          - name: AUTH_INTERNAL_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.auth }}
+                key: AUTH_INTERNAL_KEY
+          - name: OTP_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.auth }}
+                key: OTP_ENCRYPTION_KEY
+        resources:
+          {{- toYaml .Values.apiBack.resources | nindent 10 }}
